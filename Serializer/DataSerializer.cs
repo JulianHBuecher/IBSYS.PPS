@@ -26,6 +26,8 @@ namespace IBSYS.PPS.Serializer
 
             i = (Input) serializer.Deserialize(fs);
 
+            fs.Close();
+
             return i;
         }
 

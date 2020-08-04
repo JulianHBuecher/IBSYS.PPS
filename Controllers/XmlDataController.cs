@@ -16,7 +16,7 @@ namespace IBSYS.PPS.Controllers
         {
             DataSerializer serializer = new DataSerializer();
 
-            var input = serializer.ReadDataAndDeserialize(@"/home/julian/RiderProjects/IBSYS.PPS/IBSYS.PPS/Assets/input.xml");
+            var input = serializer.ReadDataAndDeserialize(@"./Assets/input.xml");
 
             if (input == null)
             {
