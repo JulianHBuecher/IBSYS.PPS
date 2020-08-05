@@ -8,7 +8,7 @@
 ### Einleitung
 
 ### Aufsetzen des Projektes
-Nach dem initialen Klonen in die Rider IDE kann das Projekt verwendet werden.
+Nach dem initialen Klonen in MS Visual Studio kann das Projekt verwendet werden.
 
 ### Starten des Projektes
 Zum Starten des Projektes wird eine Console im Projektordner geöffnet und mit folgenden Kommandos das Projekt laufbereit gemacht.
