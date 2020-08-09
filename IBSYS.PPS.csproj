@@ -12,7 +12,12 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.6" />
         <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="3.1.6" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="3.1.6" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.6" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.6" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.6">
+          <PrivateAssets>all</PrivateAssets>
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
         <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0-preview.7.20364.11" />
         <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     </ItemGroup>
@@ -25,7 +30,18 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Data" />
+      <Compile Remove="Migrations\20200809122338_InitialCreate.cs" />
+      <Compile Remove="Migrations\20200809122338_InitialCreate.Designer.cs" />
+      <Compile Remove="Migrations\20200809122803_InitialCreate.cs" />
+      <Compile Remove="Migrations\20200809122803_InitialCreate.Designer.cs" />
+      <Compile Remove="Migrations\20200809143629_InitialCreate.cs" />
+      <Compile Remove="Migrations\20200809143629_InitialCreate.Designer.cs" />
+      <Compile Remove="Migrations\20200809144415_InitialCreate.cs" />
+      <Compile Remove="Migrations\20200809144415_InitialCreate.Designer.cs" />
+      <Compile Remove="Migrations\20200809152153_InitialCreate.cs" />
+      <Compile Remove="Migrations\20200809152153_InitialCreate.Designer.cs" />
+      <Compile Remove="Migrations\20200809154042_InitialCreate.cs" />
+      <Compile Remove="Migrations\20200809154042_InitialCreate.Designer.cs" />
     </ItemGroup>
 
     <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">

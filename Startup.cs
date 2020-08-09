@@ -1,9 +1,11 @@
+using IBSYS.PPS.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
 namespace IBSYS.PPS
@@ -24,7 +26,10 @@ namespace IBSYS.PPS
 
             services.AddControllers(options => { options.RespectBrowserAcceptHeader = true; })
                 .AddXmlSerializerFormatters()
-                .AddNewtonsoftJson();
+                .AddNewtonsoftJson(x => x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
+
+            services.AddDbContext<IbsysDatabaseContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("IbsysDatabaseContext")));
 
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
