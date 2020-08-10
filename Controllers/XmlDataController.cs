@@ -23,103 +23,83 @@ namespace IBSYS.PPS.Controllers
             _db = db;
         }
 
-        // GET
+        // GET 
+        //[HttpGet]
+        //public ActionResult<Input> GetAll()
+        //{
+        //    DataSerializer serializer = new DataSerializer();
+
+        //    var input = serializer.ReadDataAndDeserialize(@"./Assets/input.xml");
+
+        //    if (input == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    return input;
+        //}
+
+        // GET - All bicycle by product name
         [HttpGet]
-        public ActionResult<Input> GetAll()
-        {
-            DataSerializer serializer = new DataSerializer();
-
-            var input = serializer.ReadDataAndDeserialize(@"./Assets/input.xml");
-
-            if (input == null)
-            {
-                return NotFound();
-            }
-
-            return input;
-        }
-
-        // GET all bicycle parts
-        [HttpGet("P1")]
-        public async Task<List<BillOfMaterial>> GetBicycleP1()
+        public async Task<List<BillOfMaterial>> GetAllBicycles()
         {
             var listOfBicycles = await _db.BillOfMaterials
                 .AsNoTracking()
                 .Include(b => b.RequiredMaterials)
-                .Where(b => b.ProductName == "P1")
                 .Select(b => b)
                 .ToListAsync();
 
             foreach (var b in listOfBicycles)
             {
-                foreach (var rm in b.RequiredMaterials)
+                foreach (var material in b.RequiredMaterials)
                 {
-                    var nestedMaterials = await _db.Materials
-                        .AsNoTracking()
-                        .Include(m => m.ParentMaterial)
-                        .Where(m => m.ParentMaterial.ID == rm.ID)
-                        .Select(m => m)
-                        .ToListAsync();
-
-
-                    rm.MaterialNeeded = new List<Material>();
-
-                    if (nestedMaterials != null)
-                    {
-                        foreach (var nm in nestedMaterials)
-                        {
-                            var secondnestedMaterials = await _db.Materials
-                                .AsNoTracking()
-                                .Include(m => m.ParentMaterial)
-                                .Where(m => m.ParentMaterial.ID == nm.ID)
-                                .Select(m => m)
-                                .ToListAsync();
-
-                            nm.MaterialNeeded = new List<Material>();
-
-                            if (secondnestedMaterials != null)
-                            {
-                                foreach (var nnm in secondnestedMaterials)
-                                {
-                                    var thirdnestedMaterials = await _db.Materials
-                                        .AsNoTracking()
-                                        .Include(m => m.ParentMaterial)
-                                        .Where(m => m.ParentMaterial.ID == nnm.ID)
-                                        .Select(m => m)
-                                        .ToListAsync();
-
-                                    nnm.MaterialNeeded = new List<Material>();
-
-                                    if (thirdnestedMaterials != null)
-                                    {
-                                        foreach (var nnnm in thirdnestedMaterials)
-                                        {
-                                            var fourthnestedMaterials = await _db.Materials
-                                                .AsNoTracking()
-                                                .Include(m => m.ParentMaterial)
-                                                .Where(m => m.ParentMaterial.ID == nnnm.ID)
-                                                .Select(m => m)
-                                                .ToListAsync();
-
-                                            nnnm.MaterialNeeded = new List<Material>();
-
-                                            if (fourthnestedMaterials != null)
-                                            {
-                                                nnnm.MaterialNeeded.AddRange(fourthnestedMaterials.OrderBy(m => m.ID));
-                                                nnm.MaterialNeeded = nnm.MaterialNeeded.Concat(thirdnestedMaterials.OrderBy(m => m.ID)).ToList();
-                                                nm.MaterialNeeded = nm.MaterialNeeded.Concat(secondnestedMaterials.OrderBy(m => m.ID)).ToList();
-                                                rm.MaterialNeeded = rm.MaterialNeeded.Concat(nestedMaterials.OrderBy(m => m.ID)).ToList();
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    material.MaterialNeeded = await GetNestedMaterials(material);
                 }
-            }
+            }            
 
             return listOfBicycles;
+        }
+
+        // GET - One bicycle with parts by product name
+        [HttpGet("{id}")]
+        public async Task<BillOfMaterial> GetOneBicycle(string id)
+        {
+            var bicycle = await _db.BillOfMaterials
+                .AsNoTracking()
+                .Include(b => b.RequiredMaterials)
+                .Select(b => b)
+                .FirstOrDefaultAsync(b => b.ProductName == id);
+
+            foreach (var material in bicycle.RequiredMaterials)
+            {
+                material.MaterialNeeded = await GetNestedMaterials(material);
+            }
+
+            return bicycle;
+        }
+
+        public async Task<List<Material>> GetNestedMaterials(Material m)
+        { 
+            var nestedMaterials = await _db.Materials
+                .AsNoTracking()
+                .Include(nm => nm.ParentMaterial)
+                .Where(nm => nm.ParentMaterial.ID.Equals(m.ID))
+                .Select(nm => nm)
+                .ToListAsync();
+
+
+            m.MaterialNeeded = new List<Material>();
+            
+            if (nestedMaterials.Count != 0)
+            {
+                foreach (var nm in nestedMaterials)
+                {
+                    nm.MaterialNeeded = await GetNestedMaterials(nm);
+                }
+                m.MaterialNeeded = nestedMaterials;
+            }
+
+            return m.MaterialNeeded;
         }
     }
 }
