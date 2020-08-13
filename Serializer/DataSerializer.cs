@@ -4,6 +4,7 @@ using System.Runtime.Serialization;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using IBSYS.PPS.Models;
+using IBSYS.PPS.Models.Generated;
 
 namespace IBSYS.PPS.Serializer
 {
@@ -13,7 +14,7 @@ namespace IBSYS.PPS.Serializer
         {
             // New Instance of XmlSerializer for Class Input
             XmlSerializer serializer = new XmlSerializer(typeof(Input));
-            
+
             // Handling of unknown nodes or attributes
             serializer.UnknownNode += new XmlNodeEventHandler(serializer_UnknownNode);
             serializer.UnknownAttribute += new XmlAttributeEventHandler(serializer_UnknownAttribute);
@@ -25,6 +26,28 @@ namespace IBSYS.PPS.Serializer
             Input i;
 
             i = (Input) serializer.Deserialize(fs);
+
+            fs.Close();
+
+            return i;
+        }
+
+        public Results ReadDataAndDeserializePeriodResults(string filename)
+        {
+            // New Instance of XmlSerializer for Class Input
+            XmlSerializer serializer = new XmlSerializer(typeof(Results));
+
+            // Handling of unknown nodes or attributes
+            serializer.UnknownNode += new XmlNodeEventHandler(serializer_UnknownNode);
+            serializer.UnknownAttribute += new XmlAttributeEventHandler(serializer_UnknownAttribute);
+
+            // Filestream for reading the file
+            FileStream fs = new FileStream(filename, FileMode.Open);
+
+            // Object varialbe of the type to be deserialized
+            Results i;
+
+            i = (Results)serializer.Deserialize(fs);
 
             fs.Close();
 

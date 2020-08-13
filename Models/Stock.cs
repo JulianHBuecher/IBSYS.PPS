@@ -13,6 +13,7 @@ namespace IBSYS.PPS.Models
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public string ItemNumber { get; set; }
         public string Description { get; set; }
+        public string Usage { get; set; }
         public double ItemValue { get; set; }
         public int QuantityInStock { get; set; }
     }

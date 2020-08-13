@@ -1,3 +1,4 @@
+using IBSYS.PPS.Models.Generated;
 using IBSYS.PPS.Models;
 using IBSYS.PPS.Serializer;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 namespace IBSYS.PPS.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class XmlDataController : ControllerBase
     {
         private readonly ILogger<XmlDataController> _logger;
@@ -24,82 +25,37 @@ namespace IBSYS.PPS.Controllers
         }
 
         // GET 
-        //[HttpGet]
-        //public ActionResult<Input> GetAll()
-        //{
-        //    DataSerializer serializer = new DataSerializer();
-
-        //    var input = serializer.ReadDataAndDeserialize(@"./Assets/input.xml");
-
-        //    if (input == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return input;
-        //}
-
-        // GET - All bicycle by product name
-        [HttpGet]
-        public async Task<List<BillOfMaterial>> GetAllBicycles()
+        [HttpGet("input")]
+        public ActionResult<Input> GetInput()
         {
-            var listOfBicycles = await _db.BillOfMaterials
-                .AsNoTracking()
-                .Include(b => b.RequiredMaterials)
-                .Select(b => b)
-                .ToListAsync();
+            DataSerializer serializer = new DataSerializer();
 
-            foreach (var b in listOfBicycles)
+            var input = serializer.ReadDataAndDeserialize(@"./Assets/input.xml");
+            //var input = serializer.ReadDataAndDeserializePeriodResults(@"./Assets/resultServlet.xml");
+
+            if (input == null)
             {
-                foreach (var material in b.RequiredMaterials)
-                {
-                    material.MaterialNeeded = await GetNestedMaterials(material);
-                }
-            }            
-
-            return listOfBicycles;
-        }
-
-        // GET - One bicycle with parts by product name
-        [HttpGet("{id}")]
-        public async Task<BillOfMaterial> GetOneBicycle(string id)
-        {
-            var bicycle = await _db.BillOfMaterials
-                .AsNoTracking()
-                .Include(b => b.RequiredMaterials)
-                .Select(b => b)
-                .FirstOrDefaultAsync(b => b.ProductName == id);
-
-            foreach (var material in bicycle.RequiredMaterials)
-            {
-                material.MaterialNeeded = await GetNestedMaterials(material);
+                return NotFound();
             }
 
-            return bicycle;
+            return input;
         }
 
-        public async Task<List<Material>> GetNestedMaterials(Material m)
-        { 
-            var nestedMaterials = await _db.Materials
-                .AsNoTracking()
-                .Include(nm => nm.ParentMaterial)
-                .Where(nm => nm.ParentMaterial.ID.Equals(m.ID))
-                .Select(nm => nm)
-                .ToListAsync();
+        // GET 
+        [HttpGet("result")]
+        public ActionResult<Results> GetResult()
+        {
+            DataSerializer serializer = new DataSerializer();
 
+            //var input = serializer.ReadDataAndDeserialize(@"./Assets/input.xml");
+            var input = serializer.ReadDataAndDeserializePeriodResults(@"./Assets/resultServlet.xml");
 
-            m.MaterialNeeded = new List<Material>();
-            
-            if (nestedMaterials.Count != 0)
+            if (input == null)
             {
-                foreach (var nm in nestedMaterials)
-                {
-                    nm.MaterialNeeded = await GetNestedMaterials(nm);
-                }
-                m.MaterialNeeded = nestedMaterials;
+                return NotFound();
             }
 
-            return m.MaterialNeeded;
+            return input;
         }
     }
 }
