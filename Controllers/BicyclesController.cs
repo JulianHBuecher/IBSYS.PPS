@@ -62,6 +62,46 @@ namespace IBSYS.PPS.Controllers
             return bicycle;
         }
 
+        // GET - All labor and machine costs
+        [HttpGet("laborandmachinecosts")]
+        public async Task<List<LaborAndMachineCosts>> GetLaborAndMachineCosts()
+        {
+            var laborAndMachineCosts = await _db.LaborAndMachineCosts
+                .AsNoTracking()
+                .Select(l => l)
+                .ToListAsync();
+
+            
+            return laborAndMachineCosts;
+        }
+        
+        // GET - All self production items
+        [HttpGet("selfproductionsitems")]
+        public async Task<List<SelfProductionItems>> GetSelfProductionItems()
+        {
+            var selfProductionItems = await _db.SelfProductionItems
+                .AsNoTracking()
+                .Select(s => s)
+                .ToListAsync();
+
+
+            return selfProductionItems;
+        }
+
+        // GET - All purchased items
+        [HttpGet("purchaseditems")]
+        public async Task<List<PurchasedItems>> GetPurchasedItems()
+        {
+            var purchasedItems = await _db.PurchasedItems
+                .AsNoTracking()
+                .Select(p => p)
+                .ToListAsync();
+
+
+            return purchasedItems;
+        }
+
+
         public async Task<List<Material>> GetNestedMaterials(Material m)
         {
             var nestedMaterials = await _db.Materials

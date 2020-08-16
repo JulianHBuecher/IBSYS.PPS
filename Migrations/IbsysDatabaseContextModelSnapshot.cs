@@ -103,6 +103,9 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int>("QuantityInStock")
                         .HasColumnType("int");
 
+                    b.Property<string>("Usage")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("ItemNumber");
 
                     b.ToTable("Stock");

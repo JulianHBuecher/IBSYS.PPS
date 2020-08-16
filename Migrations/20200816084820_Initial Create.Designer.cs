@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IBSYS.PPS.Migrations
 {
     [DbContext(typeof(IbsysDatabaseContext))]
-    [Migration("20200809154059_InitialCreate")]
+    [Migration("20200816084820_Initial Create")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -104,6 +104,9 @@ namespace IBSYS.PPS.Migrations
 
                     b.Property<int>("QuantityInStock")
                         .HasColumnType("int");
+
+                    b.Property<string>("Usage")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("ItemNumber");
 

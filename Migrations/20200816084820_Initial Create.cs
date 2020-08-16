@@ -40,6 +40,7 @@ namespace IBSYS.PPS.Migrations
                 {
                     ItemNumber = table.Column<string>(nullable: false),
                     Description = table.Column<string>(nullable: true),
+                    Usage = table.Column<string>(nullable: true),
                     ItemValue = table.Column<double>(nullable: false),
                     QuantityInStock = table.Column<int>(nullable: false),
                     Discriminator = table.Column<string>(nullable: false),

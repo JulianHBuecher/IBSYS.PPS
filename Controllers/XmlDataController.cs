@@ -31,7 +31,21 @@ namespace IBSYS.PPS.Controllers
             DataSerializer serializer = new DataSerializer();
 
             var input = serializer.ReadDataAndDeserialize(@"./Assets/input.xml");
-            //var input = serializer.ReadDataAndDeserializePeriodResults(@"./Assets/resultServlet.xml");
+
+            if (input == null)
+            {
+                return NotFound();
+            }
+
+            return input;
+        }
+
+        [HttpGet("inputfirstperiod")]
+        public ActionResult<Input> GetInputFirstPeriod()
+        {
+            DataSerializer serializer = new DataSerializer();
+
+            var input = serializer.ReadDataAndDeserialize(@"./Assets/inputFirstPeriod.xml");
 
             if (input == null)
             {
@@ -47,7 +61,6 @@ namespace IBSYS.PPS.Controllers
         {
             DataSerializer serializer = new DataSerializer();
 
-            //var input = serializer.ReadDataAndDeserialize(@"./Assets/input.xml");
             var input = serializer.ReadDataAndDeserializePeriodResults(@"./Assets/resultServlet.xml");
 
             if (input == null)
