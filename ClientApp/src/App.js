@@ -4,6 +4,7 @@ import { Layout } from "./components/Layout";
 import Home from "./components/Home";
 
 import "./custom.css";
+import ProductionOverview from "./components/production-overview";
 
 export default class App extends Component {
   static displayName = App.name;
@@ -12,6 +13,11 @@ export default class App extends Component {
     return (
       <Layout>
         <Route exact path="/" component={Home} />
+        <Route
+          exact
+          path="/productionoverview"
+          component={ProductionOverview}
+        />
       </Layout>
     );
   }

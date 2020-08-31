@@ -16,3 +16,7 @@ code {
 .sys-home-margin {
   margin-top: 50px;
 }
+
+.nav-item {
+  cursor: pointer;
+}
