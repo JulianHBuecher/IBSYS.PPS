@@ -11,6 +11,7 @@ import {
 import classnames from "classnames";
 import ProductionPlan from "./forms/production-plan";
 import SalesPlan from "./forms/sales-plan";
+import DirectSales from "./forms/direct-sales";
 
 export default function ProductionOverview() {
   const [activeTab, setActiveTab] = useState("1");
@@ -42,6 +43,16 @@ export default function ProductionOverview() {
             Vertriebswunsch
           </NavLink>
         </NavItem>
+        <NavItem>
+          <NavLink
+            className={classnames({ active: activeTab === "3" })}
+            onClick={() => {
+              toggle("3");
+            }}
+          >
+            Direktverkäufe
+          </NavLink>
+        </NavItem>
       </Nav>
       <TabContent activeTab={activeTab}>
         <TabPane tabId="1">
@@ -55,6 +66,13 @@ export default function ProductionOverview() {
           <Row>
             <Col sm="12">
               <SalesPlan />
+            </Col>
+          </Row>
+        </TabPane>
+        <TabPane tabId="3">
+          <Row>
+            <Col sm="12">
+              <DirectSales />
             </Col>
           </Row>
         </TabPane>

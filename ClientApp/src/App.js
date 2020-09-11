@@ -15,7 +15,7 @@ export default class App extends Component {
         <Route exact path="/" component={Home} />
         <Route
           exact
-          path="/productionoverview"
+          path="/production-overview"
           component={ProductionOverview}
         />
       </Layout>

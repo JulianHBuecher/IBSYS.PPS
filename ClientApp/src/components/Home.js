@@ -35,7 +35,7 @@ export default function Home() {
         )}
       </DragField>
       <button type="button" className="btn btn-primary btn-lg sys-home-margin">
-        Large button
+        Simulation starten
       </button>
     </DragContainer>
   );
