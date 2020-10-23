@@ -1,12 +1,11 @@
+using IBSYS.PPS.Config;
 using IBSYS.PPS.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 
 namespace IBSYS.PPS
 {
@@ -24,7 +23,11 @@ namespace IBSYS.PPS
         {
             // services.AddControllersWithViews();
 
-            services.AddControllers(options => { options.RespectBrowserAcceptHeader = true; })
+            services.AddControllers(options => 
+            { 
+                options.RespectBrowserAcceptHeader = true;
+                options.OutputFormatters.Add(new XmlSerializerCustomOutputFormatter());
+            })
                 .AddXmlSerializerFormatters()
                 .AddNewtonsoftJson(x => x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
@@ -62,15 +65,18 @@ namespace IBSYS.PPS
                     pattern: "{controller}/{action=Index}/{id?}");
             });
 
-            app.UseSpa(spa =>
-            {
-                spa.Options.SourcePath = "ClientApp";
+            //app.UseSpa(spa =>
+            //{
+            //    spa.Options.SourcePath = "ClientApp";
 
-                if (env.IsDevelopment())
-                {
-                    spa.UseReactDevelopmentServer(npmScript: "start");
-                }
-            });
+            //    if (env.IsDevelopment())
+            //    {
+            //        //spa.UseReactDevelopmentServer(npmScript: "start");
+            //        // For development purposes
+            //        // See reference: https://www.dotnetcurry.com/aspnet-core/1525/angular-react-vuejs-svelte-spa-aspnet-core-3
+            //        spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
+            //    }
+            //});
         }
     }
 }

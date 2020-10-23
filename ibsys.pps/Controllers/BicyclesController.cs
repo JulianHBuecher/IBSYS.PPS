@@ -1,6 +1,8 @@
 ﻿using IBSYS.PPS.Models;
 using IBSYS.PPS.Models.Disposition;
+using IBSYS.PPS.Serializer;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -8,7 +10,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Intrinsics.X86;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace IBSYS.PPS.Controllers
 {
@@ -113,6 +117,20 @@ namespace IBSYS.PPS.Controllers
             return Ok(disposition);
         }
 
+        [HttpPost("syncresult")]
+        public ActionResult SyncResultsOfLastPeriod([FromBody] XElement input)
+        {
+            DataSerializer serializer = new DataSerializer();
+
+            var resultFromLastPeriod = serializer.DeserializePeriodResults(input.ToString());
+
+            if (resultFromLastPeriod == null)
+            {
+                return BadRequest();
+            }
+
+            return Ok(resultFromLastPeriod);
+        }
 
         public async Task<List<Material>> GetNestedMaterials(Material m)
         {

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Runtime.Serialization;
+using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using IBSYS.PPS.Models;
@@ -10,10 +11,12 @@ namespace IBSYS.PPS.Serializer
 {
     public class DataSerializer
     {
+        private string defaultNamespace = "";
+
         public Input ReadDataAndDeserialize(string filename)
         {
             // New Instance of XmlSerializer for Class Input
-            XmlSerializer serializer = new XmlSerializer(typeof(Input));
+            XmlSerializer serializer = new XmlSerializer(typeof(Input), defaultNamespace);
 
             // Handling of unknown nodes or attributes
             serializer.UnknownNode += new XmlNodeEventHandler(serializer_UnknownNode);
@@ -35,7 +38,7 @@ namespace IBSYS.PPS.Serializer
         public Results ReadDataAndDeserializePeriodResults(string filename)
         {
             // New Instance of XmlSerializer for Class Input
-            XmlSerializer serializer = new XmlSerializer(typeof(Results));
+            XmlSerializer serializer = new XmlSerializer(typeof(Results), defaultNamespace);
 
             // Handling of unknown nodes or attributes
             serializer.UnknownNode += new XmlNodeEventHandler(serializer_UnknownNode);
@@ -54,9 +57,33 @@ namespace IBSYS.PPS.Serializer
             return i;
         }
 
-        public XDocument SerializeInput(Input i)
+        public Results DeserializePeriodResults(string input)
         {
-            DataContractSerializer serializer = new DataContractSerializer(typeof(Input));
+            // New Instance of XmlSerializer for Class Input
+            XmlSerializer serializer = new XmlSerializer(typeof(Results), defaultNamespace);
+
+            // Handling of unknown nodes or attributes
+            serializer.UnknownNode += new XmlNodeEventHandler(serializer_UnknownNode);
+            serializer.UnknownAttribute += new XmlAttributeEventHandler(serializer_UnknownAttribute);
+
+            // Object variable of the type to be deserialized
+            Results r;
+
+            XmlDocument xmlInput = new XmlDocument();
+
+            xmlInput.LoadXml(input);
+
+            using (XmlReader reader = new XmlNodeReader(xmlInput))
+            {
+                r = (Results)serializer.Deserialize(reader);
+            }
+
+            return r;
+        }
+
+        public XDocument SerializeInput<T>(ref T i)
+        {
+            DataContractSerializer serializer = new DataContractSerializer(typeof(T));
             
             XDocument data = new XDocument();
 
