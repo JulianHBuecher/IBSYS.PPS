@@ -2,15 +2,11 @@
 using IBSYS.PPS.Models.Disposition;
 using IBSYS.PPS.Serializer;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Intrinsics.X86;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -112,13 +108,13 @@ namespace IBSYS.PPS.Controllers
         [HttpGet("disposition/{id}")]
         public async Task<ActionResult> GetDisposition(string id)
         {
-            var disposition = await ExecuteDisposition(id, 110, 0, 20, 0);
+            var disposition = await ExecuteDisposition(id, 280, 0, 100, 0);
 
             return Ok(disposition);
         }
 
         [HttpPost("syncresult")]
-        public ActionResult SyncResultsOfLastPeriod([FromBody] XElement input)
+        public async Task<ActionResult> SyncResultsOfLastPeriod([FromBody] XElement input)
         {
             DataSerializer serializer = new DataSerializer();
 
@@ -129,7 +125,19 @@ namespace IBSYS.PPS.Controllers
                 return BadRequest();
             }
 
-            return Ok(resultFromLastPeriod);
+            try
+            {
+                await _db.AddRangeAsync(resultFromLastPeriod.Futureinwardstockmovement.Order);
+                await _db.AddRangeAsync(resultFromLastPeriod.Warehousestock.Article);
+
+                await _db.SaveChangesAsync();
+
+                return Ok("Data sucessfully inserted!");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Data could not be written to DB: {ex.Message}");
+            }
         }
 
         public async Task<List<Material>> GetNestedMaterials(Material m)
@@ -221,11 +229,11 @@ namespace IBSYS.PPS.Controllers
 
             foreach (var material in partsForDisposition)
             {
-                var stockQuantity = await _db.Stock.AsNoTracking()
-                    .Where(m => m.ItemNumber.Contains(material))
-                    .Select(m => m.QuantityInStock).FirstOrDefaultAsync();
+                var stockQuantity = await _db.StockValuesFromLastPeriod.AsNoTracking()
+                    .Where(m => material.Contains(m.Id))
+                    .Select(m => m.Amount).FirstOrDefaultAsync();
 
-                storedParts.Add(stockQuantity);
+                storedParts.Add(Convert.ToInt32(stockQuantity));
             }
 
             var bicycle = Math.Max(0,salesOrders + wareHouseStockAfter - storedParts[0] - ordersInQueue - wip);

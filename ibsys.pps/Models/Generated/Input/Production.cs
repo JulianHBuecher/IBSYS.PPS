@@ -1,6 +1,6 @@
 using System.Xml.Serialization;
 
-namespace IBSYS.PPS.Models
+namespace IBSYS.PPS.Models.Input
 {
     public class Production
     {

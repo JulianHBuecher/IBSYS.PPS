@@ -3,7 +3,7 @@ using System.Security.Policy;
 using System.Threading.Tasks.Dataflow;
 using System.Xml.Serialization;
 
-namespace IBSYS.PPS.Models
+namespace IBSYS.PPS.Models.Input
 {
     public class Order
     {

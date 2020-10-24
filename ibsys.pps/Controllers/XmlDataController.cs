@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using IBSYS.PPS.Models.Input;
 
 namespace IBSYS.PPS.Controllers
 {

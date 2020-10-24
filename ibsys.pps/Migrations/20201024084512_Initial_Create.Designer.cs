@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IBSYS.PPS.Migrations
 {
     [DbContext(typeof(IbsysDatabaseContext))]
-    [Migration("20200816084820_Initial Create")]
-    partial class InitialCreate
+    [Migration("20201024084512_Initial_Create")]
+    partial class Initial_Create
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -29,6 +29,112 @@ namespace IBSYS.PPS.Migrations
                     b.HasKey("ProductName");
 
                     b.ToTable("BillOfMaterials");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.Generated.Article", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Amount")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Pct")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Price")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Startamount")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Stockvalue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("StockValuesFromLastPeriod");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.Generated.Batch", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Amount")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Cost")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Cycletime")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("OrderID")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderID");
+
+                    b.ToTable("Batch");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.Generated.Order", b =>
+                {
+                    b.Property<int?>("OrderID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Amount")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Article")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Averageunitcosts")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Cost")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Entirecosts")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Item")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Materialcosts")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Mode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Ordercosts")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Orderperiod")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Period")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Piececosts")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Quantity")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Time")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("OrderID");
+
+                    b.ToTable("FutureInwardStockMovement");
                 });
 
             modelBuilder.Entity("IBSYS.PPS.Models.LaborAndMachineCosts", b =>
@@ -110,7 +216,7 @@ namespace IBSYS.PPS.Migrations
 
                     b.HasKey("ItemNumber");
 
-                    b.ToTable("Stock");
+                    b.ToTable("InitialStock");
 
                     b.HasDiscriminator<string>("Discriminator").HasValue("Stock");
                 });
@@ -139,6 +245,13 @@ namespace IBSYS.PPS.Migrations
                     b.HasBaseType("IBSYS.PPS.Models.Stock");
 
                     b.HasDiscriminator().HasValue("SelfProductionItems");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.Generated.Batch", b =>
+                {
+                    b.HasOne("IBSYS.PPS.Models.Generated.Order", null)
+                        .WithMany("Batch")
+                        .HasForeignKey("OrderID");
                 });
 
             modelBuilder.Entity("IBSYS.PPS.Models.Material", b =>

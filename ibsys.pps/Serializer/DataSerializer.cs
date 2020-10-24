@@ -6,6 +6,7 @@ using System.Xml.Linq;
 using System.Xml.Serialization;
 using IBSYS.PPS.Models;
 using IBSYS.PPS.Models.Generated;
+using IBSYS.PPS.Models.Input;
 
 namespace IBSYS.PPS.Serializer
 {

@@ -1,6 +1,6 @@
 using System.Xml.Serialization;
 
-namespace IBSYS.PPS.Models
+namespace IBSYS.PPS.Models.Input
 {
     [XmlRoot("input", Namespace = "",IsNullable = false)]
     public class Input
