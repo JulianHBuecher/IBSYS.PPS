@@ -1,17 +1,22 @@
-import React, { Component } from "react";
+import React from "react";
 import { Route } from "react-router";
 import { Layout } from "./components/Layout";
 import Home from "./components/Home";
 
+import * as FilePond from 'filepond';
+import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
+import FilePondPluginFileEncode from 'filepond-plugin-file-encode';
+import 'filepond/dist/filepond.min.css';
+
 import "./custom.css";
 import ProductionOverview from "./components/production-overview";
 
-export default class App extends Component {
-  static displayName = App.name;
+FilePond.registerPlugin(FilePondPluginFileValidateType);
+FilePond.registerPlugin(FilePondPluginFileEncode);
 
-  render() {
-    return (
-      <Layout>
+
+export default function App(props) {
+      return (<Layout>
         <Route exact path="/" component={Home} />
         <Route
           exact
@@ -21,4 +26,3 @@ export default class App extends Component {
       </Layout>
     );
   }
-}
