@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Xml.Serialization;
 
 namespace IBSYS.PPS.Models
 {
@@ -14,6 +15,7 @@ namespace IBSYS.PPS.Models
         public int QuantityNeeded { get; set; }
         public List<Material> MaterialNeeded { get; set; }
         [JsonIgnore]
+        [XmlIgnore]
         [ForeignKey("ParentMaterialId")]
         public Material ParentMaterial { get; set; }
     }
