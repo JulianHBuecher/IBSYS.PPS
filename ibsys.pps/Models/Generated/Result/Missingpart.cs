@@ -1,4 +1,5 @@
-﻿using System.Xml.Serialization;
+﻿using System.Collections.Generic;
+using System.Xml.Serialization;
 
 namespace IBSYS.PPS.Models.Generated
 {
@@ -7,5 +8,7 @@ namespace IBSYS.PPS.Models.Generated
 	{
 		[XmlAttribute(AttributeName = "id")]
 		public string Id { get; set; }
+		[XmlElement(ElementName = "workplace")]
+		public List<Workplace> Workplace { get; set; }
 	}
 }

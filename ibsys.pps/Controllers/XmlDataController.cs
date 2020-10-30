@@ -62,7 +62,7 @@ namespace IBSYS.PPS.Controllers
         {
             DataSerializer serializer = new DataSerializer();
 
-            var input = serializer.ReadDataAndDeserializePeriodResults(@"./Assets/resultServlet.xml");
+            var input = serializer.ReadDataAndDeserializePeriodResults(@"./Assets/resultPeriodFour.xml");
 
             if (input == null)
             {

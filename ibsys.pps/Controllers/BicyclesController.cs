@@ -3,10 +3,17 @@ using IBSYS.PPS.Models.Disposition;
 using IBSYS.PPS.Serializer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -105,10 +112,24 @@ namespace IBSYS.PPS.Controllers
         }
 
         // GET - Disposition of all bicycles
-        [HttpGet("disposition/{id}")]
-        public async Task<ActionResult> GetDisposition(string id)
+        [HttpPost("disposition/{bicycle}")]
+        public async Task<ActionResult> GetDisposition(string bicycle)
         {
-            var disposition = await ExecuteDisposition(id, 280, 0, 100, 0);
+            var plannedStocks = new List<PlannedWarehouseStock>();
+
+            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
+            {
+                var body = await reader.ReadToEndAsync();
+                if (body.Length != 0)
+                {
+                    JObject o = JObject.Parse(body);
+                    JArray a = (JArray)o["PlannedStocks"];
+                    plannedStocks = a.ToObject<List<PlannedWarehouseStock>>();
+                }
+            }
+
+            var disposition = await ExecuteDisposition(bicycle, 100, plannedStocks);
+            
 
             return Ok(disposition);
         }
@@ -127,8 +148,69 @@ namespace IBSYS.PPS.Controllers
 
             try
             {
-                await _db.AddRangeAsync(resultFromLastPeriod.Futureinwardstockmovement.Order);
-                await _db.AddRangeAsync(resultFromLastPeriod.Warehousestock.Article);
+                await _db.FutureInwardStockMovement
+                    .AddRangeAsync(resultFromLastPeriod.Futureinwardstockmovement.Order);
+
+                await _db.StockValuesFromLastPeriod
+                    .AddRangeAsync(resultFromLastPeriod.Warehousestock.Article);
+
+                await _db.WaitinglistWorkstations
+                    .AddRangeAsync(
+                        resultFromLastPeriod.Waitinglistworkstations.Workplace
+                            .Where(w => Convert.ToInt32(w.Timeneed) > 0)
+                            .Select(w => new WaitinglistForWorkstations
+                            {
+                                WorkplaceId = w.Id,
+                                TimeNeed = Convert.ToInt32(w.Timeneed),
+                                WaitingListForWorkplace = w.Waitinglist.Select(wl => new WaitinglistForWorkplace
+                                {
+                                    Period = wl.Period,
+                                    Order = wl.Order,
+                                    Item = wl.Item,
+                                    Amount = Convert.ToInt32(wl.Amount),
+                                    TimeNeed = Convert.ToInt32(wl.Timeneed),
+                                    Batch = Convert.ToInt32(wl.Firstbatch)
+                                }).ToList()
+
+                            }).ToList());
+
+                await _db.WaitinglistStock
+                    .AddRangeAsync(
+                    resultFromLastPeriod.Waitingliststock.Missingpart
+                        .Where(mp => mp.Workplace.Any())
+                        .Select(mp => new MissingPartInStock
+                        {
+                            Id = mp.Id,
+                            WaitinglistForStock = mp.Workplace.Select(wp => new WaitinglistForStock
+                            {
+                                WorkplaceId = wp.Id,
+                                TimeNeed = Convert.ToInt32(wp.Timeneed),
+                                WaitinglistForWorkplaceStock = wp.Waitinglist.Select(wl => new WaitinglistForWorkplaceStock
+                                {
+                                    Period = wl.Period,
+                                    Order = wl.Order,
+                                    Item = wl.Item,
+                                    Amount = Convert.ToInt32(wl.Amount),
+                                    TimeNeed = Convert.ToInt32(wl.Timeneed),
+                                    Batch = Convert.ToInt32(wl.Firstbatch)
+                                }).ToList()
+                            }).ToList()
+                        }).ToList());
+
+                await _db.OrdersInWork
+                    .AddRangeAsync(
+                    resultFromLastPeriod.Ordersinwork.Workplace.Any() ?
+                        resultFromLastPeriod.Ordersinwork.Workplace
+                            .Select(wp => new WaitinglistForOrdersInWork
+                            {
+                                Id = wp.Id,
+                                Period = wp.Period,
+                                Order = wp.Order,
+                                Item = wp.Item,
+                                Amount = Convert.ToInt32(wp.Amount),
+                                TimeNeed = Convert.ToInt32(wp.Timeneed),
+                                Batch = Convert.ToInt32(wp.Batch)
+                            }).ToList() : new List<WaitinglistForOrdersInWork>());
 
                 await _db.SaveChangesAsync();
 
@@ -139,7 +221,7 @@ namespace IBSYS.PPS.Controllers
                 return BadRequest($"Data could not be written to DB: {ex.Message}");
             }
         }
-
+        [NonAction]
         public async Task<List<Material>> GetNestedMaterials(Material m)
         {
             var nestedMaterials = await _db.Materials
@@ -163,7 +245,7 @@ namespace IBSYS.PPS.Controllers
 
             return m.MaterialNeeded;
         }
-
+        [NonAction]
         public async Task<List<string>> FilterNestedMaterialsByName(string parts, Material ml)
         {
             var partsForBicycle = new List<string>();
@@ -192,80 +274,155 @@ namespace IBSYS.PPS.Controllers
 
             return partsForBicycle;
         }
-
-        public async Task<Bicycle> ExecuteDisposition(string id, int salesOrders, int ordersInQueue, 
-            int wareHouseStockAfter, int wip)
+        [NonAction]
+        public async Task<Bicycle> ExecuteDisposition(string id, int salesOrders, List<PlannedWarehouseStock> plannedWarehouseStock)
         {
-            var bicycle = await _db.BillOfMaterials
-                .AsNoTracking()
-                .Include(b => b.RequiredMaterials)
-                .Select(b => b)
-                .FirstOrDefaultAsync(b => b.ProductName == id);
+            #region Bicycle Data
+            string[][] p1 = new string[][] 
+            { 
+                new string[] { "P1" },
+                new string[] { "E26*", "E51" },
+                new string[] { "E16*", "E17*", "E50" },
+                new string[] { "E4", "E10", "E49" },
+                new string[] { "E7", "E13", "E18" } 
+            };
 
-            foreach (var material in bicycle.RequiredMaterials)
+            string[][] p2 = new string[][] 
             {
-                material.MaterialNeeded = await GetNestedMaterials(material);
+                new string[] { "P2" },
+                new string[] { "E26*", "E56" },
+                new string[] { "E16*", "E17*", "E55" },
+                new string[] { "E5", "E11", "E54" },
+                new string[] { "E8", "E14", "E19" }
+            };
+
+            string[][] p3 = new string[][] 
+            {
+                new string[] { "P3" },
+                new string[] { "E26*", "E31" },
+                new string[] { "E16*", "E17*", "E30" },
+                new string[] { "E6", "E12", "E29" },
+                new string[] { "E9", "E15", "E20" }
+            };
+            #endregion
+
+            string[][] partsForDisposition = new string[][] { };
+
+            switch (id.ToLower())
+            {
+                case "p1": 
+                    partsForDisposition = p1;
+                    break;
+                case "p2":
+                    partsForDisposition = p2;
+                    break;
+                default:
+                    partsForDisposition = p3;
+                    break;
             }
 
-            var partsForDisposition = new List<string>();
-            partsForDisposition.Add(id);
+            var disposition = new List<BicyclePart>();
 
-            foreach (var material in bicycle.RequiredMaterials)
+            for (var i = 0; i < partsForDisposition.Length; i++)
             {
-                partsForDisposition.AddRange(await FilterNestedMaterialsByName("E", material));
+                var parts = new List<BicyclePart>();
+                if (!disposition.Any())
+                {
+                    parts = await CalculateParts(partsForDisposition[i].Select(a => a.ToString()).ToList(), salesOrders, 0, plannedWarehouseStock);
+                    disposition.AddRange(parts);
+                }
+                else
+                {
+                    var queueFromPrevious = disposition.Last();
+                    parts = await CalculateParts(
+                        partsForDisposition[i].Select(a => a.ToString()).ToList(), 
+                        Convert.ToInt32(queueFromPrevious.quantity), 
+                        Convert.ToInt32(queueFromPrevious.ordersInQueueOwn),
+                        plannedWarehouseStock);
+                    disposition.AddRange(parts);
+                }
             }
-
-            var disposition = await CalculateParts(partsForDisposition, salesOrders, ordersInQueue, wareHouseStockAfter, wip);
 
             return new Bicycle { parts = disposition };
         }
 
+        [NonAction]
         public async Task<List<BicyclePart>> CalculateParts(List<string> partsForDisposition,
-            int salesOrders, int ordersInQueue, int wareHouseStockAfter, int wip)
+            int salesOrders, int ordersInQueueFromPrevious, List<PlannedWarehouseStock> plannedWarehouseStock)
         {
             var requiredMaterials = new List<BicyclePart>();
 
-            var storedParts = new List<int>();
-
             foreach (var material in partsForDisposition)
             {
+                var extractedNumber = Regex.Match(material, @"\d+");
+
                 var stockQuantity = await _db.StockValuesFromLastPeriod.AsNoTracking()
-                    .Where(m => material.Contains(m.Id))
+                    .Where(m => m.Id.Equals(extractedNumber.Value))
                     .Select(m => m.Amount).FirstOrDefaultAsync();
 
-                storedParts.Add(Convert.ToInt32(stockQuantity));
+                var warehouseStock = Convert.ToInt32(stockQuantity);
+
+                var waitinglistWorkstations = await _db.WaitinglistWorkstations.AsNoTracking()
+                    .Include(m => m.WaitingListForWorkplace)
+                    .Select(w => w.WaitingListForWorkplace.Where(wl => wl.Item.Equals(extractedNumber.Value)))
+                    .SelectMany(wl => wl)
+                    .ToListAsync();
+
+                var waitinglistMissingParts = await _db.WaitinglistStock.AsNoTracking()
+                    .Include(w => w.WaitinglistForStock).ThenInclude(w => w.WaitinglistForWorkplaceStock)
+                    .Select(w => w.WaitinglistForStock
+                        .Select(ws => ws.WaitinglistForWorkplaceStock
+                        .Where(wss => wss.Item.Equals(extractedNumber.Value))
+                        .ToList())).FirstOrDefaultAsync();
+
+                var workInProgress = await _db.OrdersInWork.AsNoTracking()
+                    .Where(oiw => oiw.Item.Equals(extractedNumber.Value))
+                    .Select(oiw => oiw).ToListAsync();
+
+                var ordersInWaitingQueue = 0;
+
+                // Filter list for the same batches
+                ordersInWaitingQueue += waitinglistWorkstations
+                    .GroupBy(w => w.Batch)
+                    .Select(wp => wp.OrderBy(wp => wp.Batch).First().Amount).Sum();
+
+                ordersInWaitingQueue += waitinglistMissingParts
+                    .Select(mp => mp.GroupBy(w => w.Batch)
+                        .Select(wmp => wmp.OrderBy(wp => wp.Batch).First().Amount).Sum()).Sum();
+
+                var wip = workInProgress.GroupBy(oiw => oiw.Batch)
+                    .Select(oiwp => oiwp.OrderBy(o => o.Batch).First().Amount).Sum();
+
+                if (material.Contains("*"))
+                {
+                    warehouseStock = Convert.ToInt32(Math.Floor((decimal)warehouseStock / 3));
+                    wip = Convert.ToInt32(Math.Ceiling((decimal)wip / 3));
+                }
+
+                var plannedStock = 0;
+
+                if (!plannedWarehouseStock.Any())
+                {
+                    plannedStock = Convert.ToInt32(stockQuantity);
+                }
+                else
+                {
+                    plannedStock = plannedWarehouseStock.Where(p => p.Part.Contains(material)).Select(p => p.Amount).FirstOrDefault();
+                }
+
+                var requiredParts = Math.Max(0, salesOrders + ordersInQueueFromPrevious + plannedStock - warehouseStock - ordersInWaitingQueue - wip);
+
+                requiredMaterials.Add(new BicyclePart
+                {
+                    name = material.ToString(),
+                    ordersInQueueInherit = ordersInQueueFromPrevious.ToString(),
+                    plannedWarehouseFollowing = plannedStock.ToString(),
+                    warehouseStockPassed = warehouseStock.ToString(),
+                    ordersInQueueOwn = ordersInWaitingQueue.ToString(),
+                    wip = wip.ToString(),
+                    quantity = requiredParts.ToString()
+                });
             }
-
-            var bicycle = Math.Max(0,salesOrders + wareHouseStockAfter - storedParts[0] - ordersInQueue - wip);
-            var firstPart = Math.Max(0,bicycle + ordersInQueue + wareHouseStockAfter - storedParts[1] - ordersInQueue - wip);
-            var secondpart = Math.Max(0,bicycle + ordersInQueue + wareHouseStockAfter - storedParts[2] - ordersInQueue - wip);
-            var thirdPart = Math.Max(0,secondpart + ordersInQueue + wareHouseStockAfter - storedParts[3] - ordersInQueue - wip);
-            var fourthPart = Math.Max(0,secondpart + ordersInQueue + wareHouseStockAfter - storedParts[4] - ordersInQueue - wip);
-            var fifthPart = Math.Max(0,secondpart + ordersInQueue + wareHouseStockAfter - storedParts[5] - ordersInQueue - wip);
-            var sixthPart = Math.Max(0, fifthPart + ordersInQueue + wareHouseStockAfter - storedParts[6] - ordersInQueue - wip);
-            var seventhPart = Math.Max(0, fifthPart + ordersInQueue + wareHouseStockAfter - storedParts[7] - ordersInQueue - wip);
-            var eigthPart = Math.Max(0, fifthPart + ordersInQueue + wareHouseStockAfter - storedParts[8] - ordersInQueue - wip);
-            var ninethPart = Math.Max(0, eigthPart + ordersInQueue + wareHouseStockAfter - storedParts[9] - ordersInQueue - wip);
-            var tenthPart = Math.Max(0, eigthPart + ordersInQueue + wareHouseStockAfter - storedParts[10] - ordersInQueue - wip);
-            var eleventhPart = Math.Max(0, eigthPart + ordersInQueue + wareHouseStockAfter - storedParts[11] - ordersInQueue - wip);
-
-
-            requiredMaterials.AddRange(new BicyclePart[]
-            {
-                new BicyclePart(partsForDisposition[0],bicycle.ToString()),
-                new BicyclePart(partsForDisposition[1],firstPart.ToString()),
-                new BicyclePart(partsForDisposition[2],secondpart.ToString()),
-                new BicyclePart(partsForDisposition[3],thirdPart.ToString()),
-                new BicyclePart(partsForDisposition[4],fourthPart.ToString()),
-                new BicyclePart(partsForDisposition[5],fifthPart.ToString()),
-                new BicyclePart(partsForDisposition[6],sixthPart.ToString()),
-                new BicyclePart(partsForDisposition[7],seventhPart.ToString()),
-                new BicyclePart(partsForDisposition[8],eigthPart.ToString()),
-                new BicyclePart(partsForDisposition[9],ninethPart.ToString()),
-                new BicyclePart(partsForDisposition[10],tenthPart.ToString()),
-                new BicyclePart(partsForDisposition[11],eleventhPart.ToString())
-            });
-
 
             return requiredMaterials;
         }

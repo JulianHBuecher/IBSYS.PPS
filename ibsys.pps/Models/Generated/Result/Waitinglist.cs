@@ -1,10 +1,18 @@
-﻿using System.Xml.Serialization;
+﻿using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Xml.Serialization;
 
 namespace IBSYS.PPS.Models.Generated
 {
     [XmlRoot(ElementName = "waitinglist")]
 	public class Waitinglist
 	{
+		[Key]
+		[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+		[XmlIgnore]
+		[JsonIgnore]
+		public string ID { get; set; }
 		[XmlAttribute(AttributeName = "period")]
 		public string Period { get; set; }
 		[XmlAttribute(AttributeName = "order")]

@@ -13,6 +13,10 @@ namespace IBSYS.PPS.Models
             using (var context = new IbsysDatabaseContext(
                 serviceProvider.GetRequiredService<DbContextOptions<IbsysDatabaseContext>>()))
             {
+                //context.Database.EnsureDeleted();
+
+                //context.Database.EnsureCreated();
+
                 // Is the data initially seeded?
                 if (context.BillOfMaterials.Any() || context.LaborAndMachineCosts.Any() || context.SelfProductionItems.Any()
                     || context.PurchasedItems.Any())

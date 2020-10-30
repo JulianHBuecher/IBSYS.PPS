@@ -32,7 +32,10 @@ namespace IBSYS.PPS
                 .AddNewtonsoftJson(x => x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
             services.AddDbContext<IbsysDatabaseContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("IbsysDatabaseContext")));
+            {
+                options.UseSqlServer(Configuration.GetConnectionString("IbsysDatabaseContext"));
+                options.EnableSensitiveDataLogging();
+            });
 
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });

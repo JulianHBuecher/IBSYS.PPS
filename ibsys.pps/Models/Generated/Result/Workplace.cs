@@ -1,4 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 
 namespace IBSYS.PPS.Models.Generated
@@ -6,6 +9,11 @@ namespace IBSYS.PPS.Models.Generated
     [XmlRoot(ElementName = "workplace")]
 	public class Workplace
 	{
+		[Key]
+		[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+		[XmlIgnore]
+		[JsonIgnore]
+		public string InternalWorkplaceID { get; set; }
 		[XmlAttribute(AttributeName = "id")]
 		public string Id { get; set; }
 		[XmlAttribute(AttributeName = "setupevents")]
