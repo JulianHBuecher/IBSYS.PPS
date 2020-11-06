@@ -3,9 +3,6 @@ using IBSYS.PPS.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -27,8 +24,8 @@ namespace IBSYS.PPS.Controller.Tests
             using (var context = new IbsysDatabaseContext(ContextOptions))
             {
                 // Arrange
-                var mockLogger = new Mock<ILogger<BicyclesController>>();
-                var controller = new BicyclesController(mockLogger.Object, context);
+                var mockLogger = new Mock<ILogger<TestController>>();
+                var controller = new TestController(mockLogger.Object, context);
 
                 // Act
                 var allBicycles = await controller.GetAllBicycles();
@@ -44,8 +41,8 @@ namespace IBSYS.PPS.Controller.Tests
             using (var context = new IbsysDatabaseContext(ContextOptions))
             {
                 // Arrange
-                var mockLogger = new Mock<ILogger<BicyclesController>>();
-                var controller = new BicyclesController(mockLogger.Object, context);
+                var mockLogger = new Mock<ILogger<TestController>>();
+                var controller = new TestController(mockLogger.Object, context);
 
                 // Act
                 var oneBicycle = await controller.GetOneBicycle("P1");
@@ -61,8 +58,8 @@ namespace IBSYS.PPS.Controller.Tests
             using (var context = new IbsysDatabaseContext(ContextOptions))
             {
                 // Arrange
-                var mockLogger = new Mock<ILogger<BicyclesController>>();
-                var controller = new BicyclesController(mockLogger.Object, context);
+                var mockLogger = new Mock<ILogger<TestController>>();
+                var controller = new TestController(mockLogger.Object, context);
 
                 // Act
                 var laborAndMachineCosts = await controller.GetLaborAndMachineCosts();
@@ -78,8 +75,8 @@ namespace IBSYS.PPS.Controller.Tests
             using (var context = new IbsysDatabaseContext(ContextOptions))
             {
                 // Arrange
-                var mockLogger = new Mock<ILogger<BicyclesController>>();
-                var controller = new BicyclesController(mockLogger.Object, context);
+                var mockLogger = new Mock<ILogger<TestController>>();
+                var controller = new TestController(mockLogger.Object, context);
 
                 // Act
                 var selfProductionItems = await controller.GetSelfProductionItems();
@@ -95,8 +92,8 @@ namespace IBSYS.PPS.Controller.Tests
             using (var context = new IbsysDatabaseContext(ContextOptions))
             {
                 // Arrange
-                var mockLogger = new Mock<ILogger<BicyclesController>>();
-                var controller = new BicyclesController(mockLogger.Object, context);
+                var mockLogger = new Mock<ILogger<TestController>>();
+                var controller = new TestController(mockLogger.Object, context);
 
                 // Act
                 var purchasedItems = await controller.GetPurchasedItems();
