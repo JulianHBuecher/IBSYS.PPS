@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.Intrinsics.X86;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -221,6 +222,32 @@ namespace IBSYS.PPS.Controllers
                 return BadRequest($"Data could not be written to DB: {ex.Message}");
             }
         }
+
+        [HttpPost("materialplanning/{bicycleNumber}/{part}")]
+        public async void Materialplanning(string bicycleNumber, string part)
+        {
+            // Extract bicycles per number for filtering the needed materials
+            var bicycle = await _db.BillOfMaterials
+                .AsNoTracking()
+                .Include(b => b.RequiredMaterials)
+                .Select(b => b)
+                .FirstOrDefaultAsync(b => b.ProductName == bicycleNumber);
+
+            foreach (var material in bicycle.RequiredMaterials)
+            {
+                material.MaterialNeeded = await GetNestedMaterials(material);
+            }
+
+            var bicycleParts = new List<Material>();
+
+            foreach (var material in bicycle.RequiredMaterials)
+            {
+                var filteredPart = await FilterNestedMaterialsByName("K", material);
+                bicycleParts.AddRange(filteredPart);
+            }
+
+            var summedParts = SumFilteredMaterials(bicycleParts);
+        }
         [NonAction]
         public async Task<List<Material>> GetNestedMaterials(Material m)
         {
@@ -246,13 +273,13 @@ namespace IBSYS.PPS.Controllers
             return m.MaterialNeeded;
         }
         [NonAction]
-        public async Task<List<string>> FilterNestedMaterialsByName(string parts, Material ml)
+        public async Task<List<Material>> FilterNestedMaterialsByName(string parts, Material ml)
         {
-            var partsForBicycle = new List<string>();
+            var partsForBicycle = new List<Material>();
 
             if (ml.MaterialName.StartsWith(parts))
             {
-                partsForBicycle.Add(ml.MaterialName);
+                partsForBicycle.Add(new Material { MaterialName = ml.MaterialName, QuantityNeeded = ml.QuantityNeeded });
                 if (ml.MaterialName.StartsWith("E") && ml.MaterialNeeded.Count != 0)
                 {
                     foreach (var material in ml.MaterialNeeded)
@@ -382,21 +409,31 @@ namespace IBSYS.PPS.Controllers
                 var ordersInWaitingQueue = 0;
 
                 // Filter list for the same batches
-                ordersInWaitingQueue += waitinglistWorkstations
+                int? wlwCounter = waitinglistWorkstations
                     .GroupBy(w => w.Batch)
                     .Select(wp => wp.OrderBy(wp => wp.Batch).First().Amount).Sum();
 
-                ordersInWaitingQueue += waitinglistMissingParts
-                    .Select(mp => mp.GroupBy(w => w.Batch)
+                int? wlmCounter = waitinglistMissingParts == null ? 0 : 
+                    waitinglistMissingParts.Select(mp => mp.GroupBy(w => w.Batch)
                         .Select(wmp => wmp.OrderBy(wp => wp.Batch).First().Amount).Sum()).Sum();
 
-                var wip = workInProgress.GroupBy(oiw => oiw.Batch)
+                int? wipCounter = workInProgress.GroupBy(oiw => oiw.Batch)
                     .Select(oiwp => oiwp.OrderBy(o => o.Batch).First().Amount).Sum();
+
+                // Check for no Items in lists
+                wlwCounter ??= 0;
+                wlmCounter ??= 0;
+                wipCounter ??= 0;
+
+                ordersInWaitingQueue += wlwCounter.Value + wlmCounter.Value;
+
+                var wip = wipCounter.Value;
 
                 if (material.Contains("*"))
                 {
-                    warehouseStock = Convert.ToInt32(Math.Floor((decimal)warehouseStock / 3));
-                    wip = Convert.ToInt32(Math.Ceiling((decimal)wip / 3));
+                    warehouseStock = warehouseStock == 0 ? 0 : Convert.ToInt32(Math.Floor((decimal)warehouseStock / 3));
+                    ordersInWaitingQueue = ordersInWaitingQueue == 0 ? 0 : Convert.ToInt32(Math.Ceiling((decimal)ordersInWaitingQueue/ 3));
+                    wip = wip == 0 ? 0 : Convert.ToInt32(Math.Ceiling((decimal)wip / 3));
                 }
 
                 var plannedStock = 0;
@@ -425,6 +462,19 @@ namespace IBSYS.PPS.Controllers
             }
 
             return requiredMaterials;
+        }
+        [NonAction]
+        public List<Material> SumFilteredMaterials(List<Material> materials)
+        {
+            var partsOrderedAndSummed = materials.GroupBy(p => p.MaterialName).OrderBy(p => p.Key)
+                .Select(p => new Material
+                {
+                    MaterialName = p.Key,
+                    QuantityNeeded = p.Select(pp => pp.QuantityNeeded).Sum()
+                })
+                .ToList();
+
+            return partsOrderedAndSummed;
         }
     }
 }

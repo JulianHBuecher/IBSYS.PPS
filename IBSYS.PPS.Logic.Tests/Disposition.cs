@@ -1,8 +1,8 @@
 using IBSYS.PPS.Models;
+using MathNet.Numerics.LinearAlgebra;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -146,8 +146,10 @@ namespace IBSYS.PPS.Logic.Tests
                     }
             };
 
-            var p1Parts = new List<Material>();
-            p1Parts.Add(new Material { MaterialName = "P1", QuantityNeeded = 1 });
+            var p1Parts = new List<Material>
+            {
+                new Material { MaterialName = "P1", QuantityNeeded = 1 }
+            };
 
             foreach (var material in p1.RequiredMaterials)
             {
@@ -294,8 +296,10 @@ namespace IBSYS.PPS.Logic.Tests
                     }
             };
 
-            var p1Parts = new List<Material>();
-            p1Parts.Add(new Material { MaterialName = "P1", QuantityNeeded = 1 });
+            var p1Parts = new List<Material>
+            {
+                new Material { MaterialName = "P1", QuantityNeeded = 1 }
+            };
 
             foreach (var material in p1.RequiredMaterials)
             {
@@ -442,8 +446,10 @@ namespace IBSYS.PPS.Logic.Tests
                     }
             };
 
-            var p1Parts = new List<Material>();
-            p1Parts.Add(new Material { MaterialName = "P1", QuantityNeeded = 1 });
+            var p1Parts = new List<Material>
+            {
+                new Material { MaterialName = "P1", QuantityNeeded = 1 }
+            };
 
             foreach (var material in p1.RequiredMaterials)
             {
@@ -454,6 +460,160 @@ namespace IBSYS.PPS.Logic.Tests
             var summedParts = SumFilteredMaterials(p1Parts);
 
             Assert.Equal(24, summedParts.Count);
+        }
+
+        [Fact]
+        public async Task Materialplanning_For_K_Parts_of_P1()
+        {
+            var p1 = new BillOfMaterial()
+            {
+                ProductName = "P1",
+                RequiredMaterials = new List<Material>()
+                    {
+                        new Material() { MaterialName = "K 21", QuantityNeeded = 1 },
+                        new Material() { MaterialName = "K 24", QuantityNeeded = 1 },
+                        new Material() { MaterialName = "K 27", QuantityNeeded = 1 },
+                        new Material()
+                        {
+                            MaterialName = "E 26",
+                            QuantityNeeded = 1,
+                            MaterialNeeded = new List<Material>()
+                            {
+                                new Material() { MaterialName = "K 44", QuantityNeeded = 2 },
+                                new Material() { MaterialName = "K 47", QuantityNeeded = 1 },
+                                new Material() { MaterialName = "K 48", QuantityNeeded = 2 }
+                            }
+                        },
+                        new Material()
+                        {
+                            MaterialName = "E 51",
+                            QuantityNeeded = 1,
+                            MaterialNeeded = new List<Material>()
+                            {
+                                new Material() { MaterialName = "K 24", QuantityNeeded = 1 },
+                                new Material() { MaterialName = "K 27", QuantityNeeded = 1 },
+                                new Material()
+                                {
+                                    MaterialName = "E 16",
+                                    QuantityNeeded = 1,
+                                    MaterialNeeded = new List<Material>()
+                                    {
+                                        new Material() { MaterialName = "K 24", QuantityNeeded = 1 },
+                                        new Material() { MaterialName = "K 28", QuantityNeeded = 1 },
+                                        new Material() { MaterialName = "K 40", QuantityNeeded = 1 },
+                                        new Material() { MaterialName = "K 41", QuantityNeeded = 1 },
+                                        new Material() { MaterialName = "K 42", QuantityNeeded = 2 }
+                                    }
+                                },
+                                new Material()
+                                {
+                                    MaterialName = "E 17",
+                                    QuantityNeeded = 1,
+                                    MaterialNeeded = new List<Material>()
+                                    {
+                                        new Material() { MaterialName = "K 43", QuantityNeeded = 1 },
+                                        new Material() { MaterialName = "K 44", QuantityNeeded = 1 },
+                                        new Material() { MaterialName = "K 45", QuantityNeeded = 1 },
+                                        new Material() { MaterialName = "K 46", QuantityNeeded = 1 }
+                                    }
+                                },
+                                new Material()
+                                {
+                                    MaterialName = "E 50",
+                                    QuantityNeeded = 1,
+                                    MaterialNeeded = new List<Material>()
+                                    {
+                                        new Material() { MaterialName = "K 24", QuantityNeeded = 2 },
+                                        new Material() { MaterialName = "K 25", QuantityNeeded = 2 },
+                                        new Material()
+                                        {
+                                            MaterialName = "E 4",
+                                            QuantityNeeded = 1,
+                                            MaterialNeeded = new List<Material>()
+                                            {
+                                                new Material() { MaterialName = "K 35", QuantityNeeded = 2 },
+                                                new Material() { MaterialName = "K 36", QuantityNeeded = 1 },
+                                                new Material() { MaterialName = "K 52", QuantityNeeded = 1 },
+                                                new Material() { MaterialName = "K 53", QuantityNeeded = 36 }
+                                            }
+                                        },
+                                        new Material()
+                                        {
+                                            MaterialName = "E 10",
+                                            QuantityNeeded = 1,
+                                            MaterialNeeded = new List<Material>()
+                                            {
+                                                new Material() { MaterialName = "K 32", QuantityNeeded = 1 },
+                                                new Material() { MaterialName = "K 39", QuantityNeeded = 1 }
+                                            }
+                                        },
+                                        new Material()
+                                        {
+                                            MaterialName = "E 49",
+                                            QuantityNeeded = 1,
+                                            MaterialNeeded = new List<Material>()
+                                            {
+                                                new Material() { MaterialName = "K 24", QuantityNeeded = 2 },
+                                                new Material() { MaterialName = "K 25", QuantityNeeded = 2 },
+                                                new Material()
+                                                {
+                                                    MaterialName = "E 7",
+                                                    QuantityNeeded = 1,
+                                                    MaterialNeeded = new List<Material>()
+                                                    {
+                                                        new Material() { MaterialName = "K 35", QuantityNeeded = 2 },
+                                                        new Material() { MaterialName = "K 37", QuantityNeeded = 1 },
+                                                        new Material() { MaterialName = "K 38", QuantityNeeded = 1 },
+                                                        new Material() { MaterialName = "K 52", QuantityNeeded = 1 },
+                                                        new Material() { MaterialName = "K 53", QuantityNeeded = 36 }
+                                                    }
+                                                },
+                                                new Material()
+                                                {
+                                                    MaterialName = "E 13",
+                                                    QuantityNeeded = 1,
+                                                    MaterialNeeded = new List<Material>()
+                                                    {
+                                                        new Material() { MaterialName = "K 32", QuantityNeeded = 1 },
+                                                        new Material() { MaterialName = "K 39", QuantityNeeded = 1 }
+                                                    }
+                                                },
+                                                new Material()
+                                                {
+                                                    MaterialName = "E 18",
+                                                    QuantityNeeded = 1,
+                                                    MaterialNeeded = new List<Material>()
+                                                    {
+                                                        new Material() { MaterialName = "K 28", QuantityNeeded = 3 },
+                                                        new Material() { MaterialName = "K 32", QuantityNeeded = 1 },
+                                                        new Material() { MaterialName = "K 59", QuantityNeeded = 2 }
+                                                    }
+                                                },
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+            };
+
+            var p1Parts = new List<Material>();
+
+            foreach (var material in p1.RequiredMaterials)
+            {
+                var filteredPart = await FilterNestedMaterialsByName("K", material);
+                p1Parts.AddRange(filteredPart);
+            }
+
+            var summedParts = SumFilteredMaterials(p1Parts);
+
+            var neededMaterialVec = Vector<Double>.Build
+                .DenseOfEnumerable(summedParts.Select(p => Convert.ToDouble(p.QuantityNeeded)));
+
+            var calculatedNewParts = neededMaterialVec.Multiply(150.0);
+
+            Assert.Equal(23, summedParts.Count);
         }
 
         public async Task<List<Material>> FilterNestedMaterialsByName(string parts, Material ml)
