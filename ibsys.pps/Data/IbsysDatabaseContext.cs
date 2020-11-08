@@ -15,7 +15,7 @@ namespace IBSYS.PPS.Models
 {
     public class IbsysDatabaseContext : DbContext
     {
-        public IbsysDatabaseContext (DbContextOptions<IbsysDatabaseContext> options) 
+        public IbsysDatabaseContext(DbContextOptions<IbsysDatabaseContext> options)
             : base(options)
         {
 
@@ -41,13 +41,15 @@ namespace IBSYS.PPS.Models
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             var converter = new ValueConverter<double[], string>(
-                v => string.Join(";",v),
+                v => string.Join(";", v),
                 v => v.Split(";", StringSplitOptions.RemoveEmptyEntries).Select(val => double.Parse(val)).ToArray());
 
             modelBuilder.Entity<ProductionOrder>()
                 .Property(e => e.Orders)
                 .HasConversion(converter);
         }
+
+        public DbSet<SetupEvents> SetupEvents { get; set; }
     }
 
     [Table("WaitinglistForWorkstations")]
@@ -119,7 +121,7 @@ namespace IBSYS.PPS.Models
     {
         public WaitinglistForWorkstations WaitinglistForWorkstations { get; set; }
     }
-    
+
     [Table("WaitinglistForWorkplaceStock")]
     public class WaitinglistForWorkplaceStock : WaitinglistBase
     {
@@ -146,5 +148,14 @@ namespace IBSYS.PPS.Models
         public int Id { get; set; }
         public string Part { get; set; }
         public int Amount { get; set; }
+    }
+    [Table("SetupEvents")]
+    public class SetupEvents
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+        public int NumberOfSetupEvents { get; set; }
+        public string WorkplaceId { get; set; }
     }
 }
