@@ -124,11 +124,11 @@ namespace IBSYS.PPS.Models
         private string _ordersCollection;
         [NotMapped]
         public double[] Orders 
-        { 
-            //get 
-            //{
-            //    return Array.ConvertAll(_ordersCollection.Split(';'), Double.Parse) ?? new double[0];
-            //}
+        {
+            get
+            {
+                return Array.ConvertAll(_ordersCollection.Split(';'), Double.Parse) ?? new double[0];
+            }
             set
             {
                 var _data = value;
