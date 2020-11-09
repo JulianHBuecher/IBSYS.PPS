@@ -1,16 +1,12 @@
 ﻿using IBSYS.PPS.Models;
-using IBSYS.PPS.Models.Disposition;
 using IBSYS.PPS.Serializer;
+using IBSYS.PPS.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -24,10 +20,13 @@ namespace IBSYS.PPS.Controllers
 
         private readonly IbsysDatabaseContext _db;
 
-        public SynchronisationController(ILogger<SynchronisationController> logger, IbsysDatabaseContext db)
+        private readonly DataService _service;
+
+        public SynchronisationController(ILogger<SynchronisationController> logger, IbsysDatabaseContext db, DataService service)
         {
             _logger = logger;
             _db = db;
+            _service = service;
         }
 
         // POST - Synchronization of results from last period
@@ -38,6 +37,8 @@ namespace IBSYS.PPS.Controllers
 
             var resultFromLastPeriod = serializer.DeserializePeriodResults(input.ToString());
 
+            var serviceProvider = new ServiceCollection();
+
             if (resultFromLastPeriod == null)
             {
                 return BadRequest();
@@ -45,6 +46,12 @@ namespace IBSYS.PPS.Controllers
 
             try
             {
+                _db.Database.EnsureDeleted();
+
+                _db.Database.EnsureCreated();
+
+                _service.InsertDataInFreshDb(_db);
+
                 await _db.FutureInwardStockMovement
                     .AddRangeAsync(resultFromLastPeriod.Futureinwardstockmovement.Order);
 
@@ -108,6 +115,9 @@ namespace IBSYS.PPS.Controllers
                                 TimeNeed = Convert.ToInt32(wp.Timeneed),
                                 Batch = Convert.ToInt32(wp.Batch)
                             }).ToList() : new List<WaitinglistForOrdersInWork>());
+
+                // Inserting Forecasts for Sellwish Input
+                await _db.Forecasts.AddAsync(resultFromLastPeriod.Forecast);
 
                 await _db.SaveChangesAsync();
 

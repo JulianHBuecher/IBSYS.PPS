@@ -171,7 +171,7 @@ namespace IBSYS.PPS.Controllers
 
             foreach (var material in partsForDisposition)
             {
-                var partNumber = material.Split(" ")[1];
+                var partNumber = Regex.Match(material, @"\d+").Value;
 
                 var stockQuantity = await _db.StockValuesFromLastPeriod.AsNoTracking()
                     .Where(m => m.Id.Equals(partNumber))

@@ -21,15 +21,18 @@ namespace IBSYS.PPS
             {
                 var services = scope.ServiceProvider;
 
-                try
-                {
-                    SeedData.Initialize(services);
-                } 
-                catch (Exception ex)
-                {
-                    var logger = services.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "An error occured seeding the database");
-                }
+                //try
+                //{
+                //    using (var scope = host.Services.CreateScope())
+                //    {
+                //        SeedData.Initialize(services);
+                //    }
+                //} 
+                //catch (Exception ex)
+                //{
+                //    var logger = services.GetRequiredService<ILogger<Program>>();
+                //    logger.LogError(ex, "An error occured seeding the database");
+                //}
 
                 host.Run();
             }

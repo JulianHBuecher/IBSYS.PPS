@@ -1,30 +1,21 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace IBSYS.PPS.Models
 {
     public static class SeedData
     {
-        public static async void Initialize(IServiceProvider serviceProvider)
+        public static async void Initialize(IbsysDatabaseContext context)
         {
-            using (var context = new IbsysDatabaseContext(
-                serviceProvider.GetRequiredService<DbContextOptions<IbsysDatabaseContext>>()))
+            // Is the data initially seeded?
+            if (context.BillOfMaterials.Any() || context.LaborAndMachineCosts.Any() || context.SelfProductionItems.Any()
+                || context.PurchasedItems.Any())
             {
-                context.Database.EnsureDeleted();
+                return; // DB has been seeded
+            }
 
-                context.Database.EnsureCreated();
-
-                // Is the data initially seeded?
-                if (context.BillOfMaterials.Any() || context.LaborAndMachineCosts.Any() || context.SelfProductionItems.Any()
-                    || context.PurchasedItems.Any())
-                {
-                    return; // DB has been seeded
-                }
-
-                var p1 = new BillOfMaterial()
+            await context.AddAsync(new BillOfMaterial()
                 {
                     ProductName = "P1",
                     RequiredMaterials = new List<Material>()
@@ -155,12 +146,12 @@ namespace IBSYS.PPS.Models
                             }
                         }
                     }
-                };
+                });
 
-                var p2 = new BillOfMaterial()
-                {
-                    ProductName = "P2",
-                    RequiredMaterials = new List<Material>()
+            await context.AddAsync(new BillOfMaterial()
+            {
+                ProductName = "P2",
+                RequiredMaterials = new List<Material>()
                     {
                         new Material() { MaterialName = "K 22", QuantityNeeded = 1 },
                         new Material() { MaterialName = "K 24", QuantityNeeded = 1 },
@@ -288,12 +279,12 @@ namespace IBSYS.PPS.Models
                             }
                         }
                     }
-                };
+            });
 
-                var p3 = new BillOfMaterial()
-                {
-                    ProductName = "P3",
-                    RequiredMaterials = new List<Material>()
+            await context.AddAsync(new BillOfMaterial()
+            {
+                ProductName = "P3",
+                RequiredMaterials = new List<Material>()
                     {
                         new Material() { MaterialName = "K 23", QuantityNeeded = 1 },
                         new Material() { MaterialName = "K 24", QuantityNeeded = 1 },
@@ -421,9 +412,9 @@ namespace IBSYS.PPS.Models
                             }
                         }
                     }
-                };
+            });
 
-                var laborAndMachineCosts = new List<LaborAndMachineCosts>()
+            var laborAndMachineCosts = new List<LaborAndMachineCosts>()
                 {
                     new LaborAndMachineCosts() { Workplace=1,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.05,IdleTimeMachineCosts=0.01},
                     new LaborAndMachineCosts() { Workplace=2,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.05,IdleTimeMachineCosts=0.01},
@@ -441,8 +432,8 @@ namespace IBSYS.PPS.Models
                     new LaborAndMachineCosts() { Workplace=15,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.05,IdleTimeMachineCosts=0.01},
                 };
 
-                // Noch Verwendung in den unterschiedlichen Produkten einfügen
-                var initialStockEParts = new List<SelfProductionItems>()
+            // Noch Verwendung in den unterschiedlichen Produkten einfügen
+            var initialStockEParts = new List<SelfProductionItems>()
                 {
                     new SelfProductionItems(){ ItemNumber="P 1", Description="Children's bicycle", ItemValue=156.13, QuantityInStock=100 },
                     new SelfProductionItems(){ ItemNumber="P 2", Description="Ladies bicycle", ItemValue=163.33, QuantityInStock=100 },
@@ -476,7 +467,7 @@ namespace IBSYS.PPS.Models
                     new SelfProductionItems(){ ItemNumber="E 56", Description="Bicycle w/o pedals", Usage="D", ItemValue=142.67, QuantityInStock=100 }
                 };
 
-                var initialStockKParts = new List<PurchasedItems>()
+            var initialStockKParts = new List<PurchasedItems>()
                 {
                     new PurchasedItems() { ItemNumber="K 21", Description="Chain", Usage="K", ItemValue=5.00, QuantityInStock=300, DiscountQuantity=300, OrderCosts=50.00, ProcureLeadTime=1.8, Deviation=0.4 },
                     new PurchasedItems() { ItemNumber="K 22", Description="Chain", Usage="D", ItemValue=6.50, QuantityInStock=300, DiscountQuantity=300, OrderCosts=50.00, ProcureLeadTime=1.7, Deviation=0.4 },
@@ -509,15 +500,12 @@ namespace IBSYS.PPS.Models
                     new PurchasedItems() { ItemNumber="K 59", Description="Welding wires", Usage="KDH", ItemValue=0.15, QuantityInStock=1800, DiscountQuantity=1800, OrderCosts=50.00, ProcureLeadTime=0.7, Deviation=0.2 },
                 };
 
-                await context.AddAsync(p1);
-                await context.AddAsync(p2);
-                await context.AddAsync(p3);
-                await context.AddRangeAsync(laborAndMachineCosts);
-                await context.AddRangeAsync(initialStockEParts);
-                await context.AddRangeAsync(initialStockKParts);
+            //await context.AddRangeAsync(new List<BillOfMaterial> { p1, p2, p3 });
+            await context.AddRangeAsync(laborAndMachineCosts);
+            await context.AddRangeAsync(initialStockEParts);
+            await context.AddRangeAsync(initialStockKParts);
 
-                await context.SaveChangesAsync();
-            }
+            await context.SaveChangesAsync();
         }
     }
 }

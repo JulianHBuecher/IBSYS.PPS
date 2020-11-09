@@ -11,11 +11,11 @@
 
     <ItemGroup>
         <PackageReference Include="MathNet.Numerics" Version="4.12.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.6" />
-        <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="3.1.6" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.6" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.6" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.6">
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.9" />
+        <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="3.1.9" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.9" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.9" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.9">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -47,8 +47,22 @@
       <Compile Remove="Migrations\20200809154059_InitialCreate.Designer.cs" />
       <Compile Remove="Migrations\20200816084820_Initial Create.cs" />
       <Compile Remove="Migrations\20200816084820_Initial Create.Designer.cs" />
+      <Compile Remove="Migrations\20201024084512_Initial_Create.cs" />
+      <Compile Remove="Migrations\20201024084512_Initial_Create.Designer.cs" />
       <Compile Remove="Migrations\20201109153623_Production_Orders_Added.cs" />
       <Compile Remove="Migrations\20201109153623_Production_Orders_Added.Designer.cs" />
+      <Compile Remove="Migrations\20201109162235_Production_Orders_Added.cs" />
+      <Compile Remove="Migrations\20201109162235_Production_Orders_Added.Designer.cs" />
+      <Compile Remove="Migrations\20201109170940_Planned_Warehousestocks_Added.cs" />
+      <Compile Remove="Migrations\20201109170940_Planned_Warehousestocks_Added.Designer.cs" />
+      <Compile Remove="Migrations\20201109185444_Forecasts_Added.cs" />
+      <Compile Remove="Migrations\20201109185444_Forecasts_Added.Designer.cs" />
+      <Compile Remove="Migrations\20201109185922_Selldirect_Items_Added.cs" />
+      <Compile Remove="Migrations\20201109185922_Selldirect_Items_Added.Designer.cs" />
+      <Compile Remove="Migrations\20201109204005_Modelbuilder_Material_Added.cs" />
+      <Compile Remove="Migrations\20201109204005_Modelbuilder_Material_Added.Designer.cs" />
+      <Compile Remove="Migrations\20201109205421_Entity_Material_Updated.cs" />
+      <Compile Remove="Migrations\20201109205421_Entity_Material_Updated.Designer.cs" />
     </ItemGroup>
 
     <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">

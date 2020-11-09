@@ -1,5 +1,6 @@
 using IBSYS.PPS.Config;
 using IBSYS.PPS.Models;
+using IBSYS.PPS.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -36,6 +37,8 @@ namespace IBSYS.PPS
                 options.UseSqlServer(Configuration.GetConnectionString("IbsysDatabaseContext"));
                 options.EnableSensitiveDataLogging();
             });
+
+            services.AddScoped<DataService>();
 
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });

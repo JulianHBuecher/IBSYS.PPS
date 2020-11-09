@@ -15,7 +15,7 @@ namespace IBSYS.PPS.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.1.6")
+                .HasAnnotation("ProductVersion", "3.1.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
@@ -78,6 +78,27 @@ namespace IBSYS.PPS.Migrations
                     b.ToTable("Batch");
                 });
 
+            modelBuilder.Entity("IBSYS.PPS.Models.Generated.Forecast", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("P1")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("P2")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("P3")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Forecasts");
+                });
+
             modelBuilder.Entity("IBSYS.PPS.Models.Generated.Order", b =>
                 {
                     b.Property<int?>("OrderID")
@@ -135,6 +156,30 @@ namespace IBSYS.PPS.Migrations
                     b.ToTable("FutureInwardStockMovement");
                 });
 
+            modelBuilder.Entity("IBSYS.PPS.Models.Input.SellDirectItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Article")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("Penalty")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Price")
+                        .HasColumnType("float");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SellDirectItems");
+                });
+
             modelBuilder.Entity("IBSYS.PPS.Models.LaborAndMachineCosts", b =>
                 {
                     b.Property<int>("Workplace")
@@ -165,10 +210,9 @@ namespace IBSYS.PPS.Migrations
 
             modelBuilder.Entity("IBSYS.PPS.Models.Material", b =>
                 {
-                    b.Property<int>("ID")
+                    b.Property<Guid>("ID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("BillOfMaterialProductName")
                         .HasColumnType("nvarchar(450)");
@@ -176,8 +220,8 @@ namespace IBSYS.PPS.Migrations
                     b.Property<string>("MaterialName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("ParentMaterialId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("ParentMaterialId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("QuantityNeeded")
                         .HasColumnType("int");
