@@ -1,5 +1,6 @@
 ﻿using IBSYS.PPS.Models.Generated;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -31,9 +32,13 @@ namespace IBSYS.PPS.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            var converter = new ValueConverter<double[], string>(
+                v => string.Join(";",v),
+                v => v.Split(";", StringSplitOptions.RemoveEmptyEntries).Select(val => double.Parse(val)).ToArray());
+
             modelBuilder.Entity<ProductionOrder>()
-                .Property<string>("OrdersCollection")
-                .HasColumnName("_ordersCollection");
+                .Property(e => e.Orders)
+                .HasConversion(converter);
         }
     }
 
@@ -112,6 +117,7 @@ namespace IBSYS.PPS.Models
     {
         public WaitinglistForStock WaitinglistForStock { get; set; }
     }
+
     [Table("ProductionOrders")]
     public class ProductionOrder
     {
@@ -120,20 +126,6 @@ namespace IBSYS.PPS.Models
         [JsonIgnore]
         public int Id { get; set; }
         public string Bicycle { get; set; }
-        [JsonIgnore]
-        private string _ordersCollection;
-        [NotMapped]
-        public double[] Orders 
-        {
-            get
-            {
-                return Array.ConvertAll(_ordersCollection.Split(';'), Double.Parse) ?? new double[0];
-            }
-            set
-            {
-                var _data = value;
-                _ordersCollection = string.Join(";", _data.Select(p => p.ToString()).ToArray());
-            }
-        }
+        public double[] Orders { get; set; }
     }
 }
