@@ -1,8 +1,11 @@
 ﻿using IBSYS.PPS.Models.Generated;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 
 namespace IBSYS.PPS.Models
 {
@@ -24,6 +27,14 @@ namespace IBSYS.PPS.Models
         public DbSet<WaitinglistForWorkstations> WaitinglistWorkstations { get; set; }
         public DbSet<MissingPartInStock> WaitinglistStock { get; set; }
         public DbSet<WaitinglistForOrdersInWork> OrdersInWork { get; set; }
+        public DbSet<ProductionOrder> ProductionOrders { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<ProductionOrder>()
+                .Property<string>("OrdersCollection")
+                .HasColumnName("_ordersCollection");
+        }
     }
 
     [Table("WaitinglistForWorkstations")]
@@ -100,5 +111,29 @@ namespace IBSYS.PPS.Models
     public class WaitinglistForWorkplaceStock : WaitinglistBase
     {
         public WaitinglistForStock WaitinglistForStock { get; set; }
+    }
+    [Table("ProductionOrders")]
+    public class ProductionOrder
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [JsonIgnore]
+        public int Id { get; set; }
+        public string Bicycle { get; set; }
+        [JsonIgnore]
+        private string _ordersCollection;
+        [NotMapped]
+        public double[] Orders 
+        { 
+            //get 
+            //{
+            //    return Array.ConvertAll(_ordersCollection.Split(';'), Double.Parse) ?? new double[0];
+            //}
+            set
+            {
+                var _data = value;
+                _ordersCollection = string.Join(";", _data.Select(p => p.ToString()).ToArray());
+            }
+        }
     }
 }

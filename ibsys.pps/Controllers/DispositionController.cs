@@ -46,7 +46,13 @@ namespace IBSYS.PPS.Controllers
                 }
             }
 
-            var disposition = await ExecuteDisposition(bicycle, 100, plannedStocks);
+            var productionOrder = await _db.ProductionOrders
+                .AsNoTracking()
+                .Where(po => po.Bicycle.Equals(bicycle))
+                .Select(po => po.Orders)
+                .SingleOrDefaultAsync();
+
+            var disposition = await ExecuteDisposition(bicycle, Convert.ToInt32(productionOrder[0]), plannedStocks);
 
 
             return Ok(disposition);
@@ -198,8 +204,8 @@ namespace IBSYS.PPS.Controllers
                     plannedStock = plannedWarehouseStock.Where(p => p.Part.Contains(material)).Select(p => p.Amount).FirstOrDefault();
                 }
 
-                var requiredParts = Math.Max(0, salesOrders + ordersInQueueFromPrevious + plannedStock - warehouseStock - ordersInWaitingQueue - wip);
-
+                var requiredParts = (int)Math.Round((decimal)Math.Max(0, salesOrders + ordersInQueueFromPrevious + plannedStock - warehouseStock - ordersInWaitingQueue - wip) / 10) * 10;
+                
                 requiredMaterials.Add(new BicyclePart
                 {
                     name = material.ToString(),
