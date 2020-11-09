@@ -32,7 +32,7 @@ namespace IBSYS.PPS.Migrations
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Bicycle = table.Column<string>(nullable: true),
-                    _ordersCollection = table.Column<string>(nullable: true)
+                    Orders = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {

@@ -4,14 +4,16 @@ using IBSYS.PPS.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace IBSYS.PPS.Migrations
 {
     [DbContext(typeof(IbsysDatabaseContext))]
-    partial class IbsysDatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20201109162235_Production_Orders_Added")]
+    partial class Production_Orders_Added
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -204,24 +206,6 @@ namespace IBSYS.PPS.Migrations
                     b.HasKey("MissingPartId");
 
                     b.ToTable("WaitinglistForStock");
-                });
-
-            modelBuilder.Entity("IBSYS.PPS.Models.PlannedWarehouseStock", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<int>("Amount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Part")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PlannedWarehouseStocks");
                 });
 
             modelBuilder.Entity("IBSYS.PPS.Models.ProductionOrder", b =>

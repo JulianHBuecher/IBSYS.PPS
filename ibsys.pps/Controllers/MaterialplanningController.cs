@@ -30,18 +30,10 @@ namespace IBSYS.PPS.Controllers
         [HttpPost]
         public async void Materialplanning()
         {
-            var productionOrders = new List<ProductionOrder>();
-
-            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
-            {
-                var body = await reader.ReadToEndAsync();
-                if (body.Length != 0)
-                {
-                    JObject o = JObject.Parse(body);
-                    JArray a = (JArray)o["ProductionOrders"];
-                    productionOrders = a.ToObject<List<ProductionOrder>>();
-                }
-            }
+            var productionOrders = await _db.ProductionOrders
+                .AsNoTracking()
+                .Select(po => po)
+                .ToListAsync();
 
             double[,] productionMatrix = new double[3,4];
 
@@ -92,7 +84,7 @@ namespace IBSYS.PPS.Controllers
             var completedPartsForP2 = InsertNotNeededMaterials(new List<Material>(summedPartsPTwo), new List<Material>(summedPartsPOne), new List<Material>(summedPartsPThree));
             var completedPartsForP3 = InsertNotNeededMaterials(new List<Material>(summedPartsPThree), new List<Material>(summedPartsPOne), new List<Material>(summedPartsPTwo));
 
-
+            // Conversion of Summed Parts To Vectors
             var neededMaterialVecP1 = Vector<Double>.Build
                 .DenseOfEnumerable(summedPartsPOne.Select(p => Convert.ToDouble(p.QuantityNeeded)));
             var neededMaterialVecP2 = Vector<Double>.Build
@@ -108,6 +100,13 @@ namespace IBSYS.PPS.Controllers
             var calculatedNewParts = neededMaterialMatrix.Multiply(productionOrderMatrix);
 
 
+        }
+
+        [HttpPost("syncresult")]
+        public async Task<ActionResult> PostResultForPersistence()
+        {
+            // TODO: Create Class for JSON Serialization and Persistence in DB
+            return Ok("Data sucessfully inserted");
         }
 
         [NonAction]
@@ -235,5 +234,59 @@ namespace IBSYS.PPS.Controllers
             return partsForBicycle;
         }
 
+        [NonAction]
+        public async Task PlaceOrder(Matrix<Double> requiredParts, List<Material> partsForPlanning)
+        {
+            foreach (var part in partsForPlanning)
+            {
+                var position = 0;
+
+                var partNumber = part.MaterialName.Split(" ")[1];
+
+                var stockQuantity = await _db.StockValuesFromLastPeriod.AsNoTracking()
+                    .Where(m => m.Id.Equals(partNumber))
+                    .Select(m => m.Amount).FirstOrDefaultAsync();
+
+                var warehouseStock = Convert.ToInt32(stockQuantity);
+
+                var waitinglistWorkstations = await _db.WaitinglistWorkstations.AsNoTracking()
+                    .Include(m => m.WaitingListForWorkplace)
+                    .Select(w => w.WaitingListForWorkplace.Where(wl => wl.Item.Equals(partNumber)))
+                    .SelectMany(wl => wl)
+                    .ToListAsync();
+
+                var waitinglistMissingParts = await _db.WaitinglistStock.AsNoTracking()
+                    .Include(w => w.WaitinglistForStock).ThenInclude(w => w.WaitinglistForWorkplaceStock)
+                    .Select(w => w.WaitinglistForStock
+                        .Select(ws => ws.WaitinglistForWorkplaceStock
+                        .Where(wss => wss.Item.Equals(partNumber)).ToList()))
+                    .FirstOrDefaultAsync();
+
+                var ordersInWaitingQueue = 0;
+
+                // Filter list for the same batches
+                int? wlwCounter = waitinglistWorkstations
+                    .GroupBy(w => w.Batch)
+                    .Select(wp => wp.OrderBy(wp => wp.Batch).First().Amount).Sum();
+
+                int? wlmCounter = waitinglistMissingParts == null ? 0 :
+                    waitinglistMissingParts.Select(mp => mp.GroupBy(w => w.Batch)
+                        .Select(wmp => wmp.OrderBy(wp => wp.Batch).First().Amount).Sum()).Sum();
+
+                // Check for no Items in lists
+                wlwCounter ??= 0;
+                wlmCounter ??= 0;
+
+                ordersInWaitingQueue += wlwCounter.Value + wlmCounter.Value;
+
+                // TODO: Get additional required K parts resulting from queue
+
+
+                // TODO: Logik for Decision between E or N orders and how much
+
+
+                // TODO: Return Results
+            }
+        }
     }
 }

@@ -58,6 +58,39 @@ namespace IBSYS.PPS.Controllers
             return Ok(disposition);
         }
 
+        [HttpPost("syncresult")]
+        public async Task<ActionResult> PostResultForPersistence()
+        {
+            var plannedStocks = new List<PlannedWarehouseStock>();
+
+            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
+            {
+                var body = await reader.ReadToEndAsync();
+                if (body.Length != 0)
+                {
+                    JObject o = JObject.Parse(body);
+                    JArray a = (JArray)o["PlannedStocks"];
+                    plannedStocks = a.ToObject<List<PlannedWarehouseStock>>();
+                }
+            }
+
+            try
+            {
+                if (plannedStocks != null)
+                {
+                    await _db.AddRangeAsync(plannedStocks);
+                }
+
+                await _db.SaveChangesAsync();
+
+                return Ok("Data sucessfully inserted");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Something went wrong, {ex.Message}");
+            }
+        }
+
         [NonAction]
         public async Task<Bicycle> ExecuteDisposition(string id, int salesOrders, List<PlannedWarehouseStock> plannedWarehouseStock)
         {
@@ -138,17 +171,17 @@ namespace IBSYS.PPS.Controllers
 
             foreach (var material in partsForDisposition)
             {
-                var extractedNumber = Regex.Match(material, @"\d+");
+                var partNumber = material.Split(" ")[1];
 
                 var stockQuantity = await _db.StockValuesFromLastPeriod.AsNoTracking()
-                    .Where(m => m.Id.Equals(extractedNumber.Value))
+                    .Where(m => m.Id.Equals(partNumber))
                     .Select(m => m.Amount).FirstOrDefaultAsync();
 
                 var warehouseStock = Convert.ToInt32(stockQuantity);
 
                 var waitinglistWorkstations = await _db.WaitinglistWorkstations.AsNoTracking()
                     .Include(m => m.WaitingListForWorkplace)
-                    .Select(w => w.WaitingListForWorkplace.Where(wl => wl.Item.Equals(extractedNumber.Value)))
+                    .Select(w => w.WaitingListForWorkplace.Where(wl => wl.Item.Equals(partNumber)))
                     .SelectMany(wl => wl)
                     .ToListAsync();
 
@@ -156,11 +189,11 @@ namespace IBSYS.PPS.Controllers
                     .Include(w => w.WaitinglistForStock).ThenInclude(w => w.WaitinglistForWorkplaceStock)
                     .Select(w => w.WaitinglistForStock
                         .Select(ws => ws.WaitinglistForWorkplaceStock
-                        .Where(wss => wss.Item.Equals(extractedNumber.Value))
+                        .Where(wss => wss.Item.Equals(partNumber))
                         .ToList())).FirstOrDefaultAsync();
 
                 var workInProgress = await _db.OrdersInWork.AsNoTracking()
-                    .Where(oiw => oiw.Item.Equals(extractedNumber.Value))
+                    .Where(oiw => oiw.Item.Equals(partNumber))
                     .Select(oiw => oiw).ToListAsync();
 
                 var ordersInWaitingQueue = 0;

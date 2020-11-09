@@ -1,4 +1,5 @@
-﻿using IBSYS.PPS.Models.Generated;
+﻿using IBSYS.PPS.Models.Disposition;
+using IBSYS.PPS.Models.Generated;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Newtonsoft.Json;
@@ -29,6 +30,7 @@ namespace IBSYS.PPS.Models
         public DbSet<MissingPartInStock> WaitinglistStock { get; set; }
         public DbSet<WaitinglistForOrdersInWork> OrdersInWork { get; set; }
         public DbSet<ProductionOrder> ProductionOrders { get; set; }
+        public DbSet<PlannedWarehouseStock> PlannedWarehouseStocks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -127,5 +129,16 @@ namespace IBSYS.PPS.Models
         public int Id { get; set; }
         public string Bicycle { get; set; }
         public double[] Orders { get; set; }
+    }
+
+    [Table("PlannedWarehouseStocks")]
+    public class PlannedWarehouseStock
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [JsonIgnore]
+        public int Id { get; set; }
+        public string Part { get; set; }
+        public int Amount { get; set; }
     }
 }

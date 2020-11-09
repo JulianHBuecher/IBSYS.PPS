@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IBSYS.PPS.Migrations
 {
     [DbContext(typeof(IbsysDatabaseContext))]
-    [Migration("20201109153623_Production_Orders_Added")]
-    partial class Production_Orders_Added
+    [Migration("20201109170940_Planned_Warehousestocks_Added")]
+    partial class Planned_Warehousestocks_Added
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -208,6 +208,24 @@ namespace IBSYS.PPS.Migrations
                     b.ToTable("WaitinglistForStock");
                 });
 
+            modelBuilder.Entity("IBSYS.PPS.Models.PlannedWarehouseStock", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Part")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PlannedWarehouseStocks");
+                });
+
             modelBuilder.Entity("IBSYS.PPS.Models.ProductionOrder", b =>
                 {
                     b.Property<int>("Id")
@@ -218,8 +236,7 @@ namespace IBSYS.PPS.Migrations
                     b.Property<string>("Bicycle")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("OrdersCollection")
-                        .HasColumnName("_ordersCollection")
+                    b.Property<string>("Orders")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
