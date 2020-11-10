@@ -27,8 +27,8 @@ namespace IBSYS.PPS.Controllers
             _db = db;
         }
 
-        [HttpPost]
-        public async void Materialplanning()
+        [HttpGet]
+        public async Task<ActionResult> Materialplanning()
         {
             var productionOrders = await _db.ProductionOrders
                 .AsNoTracking()
@@ -60,20 +60,37 @@ namespace IBSYS.PPS.Controllers
                 }
             }
 
+            var p1 = new BillOfMaterial();
+            var p2 = new BillOfMaterial();
+            var p3 = new BillOfMaterial();
+
             var extractedBicyclePOne = new List<Material>();
             var extractedBicyclePTwo = new List<Material>();
             var extractedBicyclePThree = new List<Material>();
 
-            foreach (var bicycle in new List<List<Material>> { extractedBicyclePOne, extractedBicyclePTwo, extractedBicyclePThree })
+            var counter = 0;
+
+            foreach (var bicycle in new List<BillOfMaterial> { p1, p2, p3})
             {
-                foreach (var b in bicycleParts)
-                {
-                    foreach (var material in b.RequiredMaterials)
-                    {
-                        var filteredPart = await FilterNestedMaterialsByName("K", material);
-                        bicycle.AddRange(filteredPart);
-                    }
-                }
+                bicycle.ProductName = bicycleParts[counter].ProductName;
+                bicycle.RequiredMaterials = bicycleParts[counter].RequiredMaterials;
+                counter++;
+            }
+
+            foreach (var material in p1.RequiredMaterials)
+            {
+                var filteredPart = await FilterNestedMaterialsByName("K", material);
+                extractedBicyclePOne.AddRange(filteredPart);
+            }
+            foreach (var material in p2.RequiredMaterials)
+            {
+                var filteredPart = await FilterNestedMaterialsByName("K", material);
+                extractedBicyclePTwo.AddRange(filteredPart);
+            }
+            foreach (var material in p3.RequiredMaterials)
+            {
+                var filteredPart = await FilterNestedMaterialsByName("K", material);
+                extractedBicyclePThree.AddRange(filteredPart);
             }
 
             var summedPartsPOne = SumFilteredMaterials(extractedBicyclePOne);
@@ -86,11 +103,11 @@ namespace IBSYS.PPS.Controllers
 
             // Conversion of Summed Parts To Vectors
             var neededMaterialVecP1 = Vector<Double>.Build
-                .DenseOfEnumerable(summedPartsPOne.Select(p => Convert.ToDouble(p.QuantityNeeded)));
+                .DenseOfEnumerable(completedPartsForP1.Select(p => Convert.ToDouble(p.QuantityNeeded)));
             var neededMaterialVecP2 = Vector<Double>.Build
-                .DenseOfEnumerable(summedPartsPTwo.Select(p => Convert.ToDouble(p.QuantityNeeded)));
+                .DenseOfEnumerable(completedPartsForP2.Select(p => Convert.ToDouble(p.QuantityNeeded)));
             var neededMaterialVecP3 = Vector<Double>.Build
-                .DenseOfEnumerable(summedPartsPThree.Select(p => Convert.ToDouble(p.QuantityNeeded)));
+                .DenseOfEnumerable(completedPartsForP3.Select(p => Convert.ToDouble(p.QuantityNeeded)));
 
             var neededMaterialMatrix = Matrix<Double>.Build.DenseOfColumnVectors(neededMaterialVecP1, neededMaterialVecP2, neededMaterialVecP3);
 
@@ -99,14 +116,53 @@ namespace IBSYS.PPS.Controllers
 
             var calculatedNewParts = neededMaterialMatrix.Multiply(productionOrderMatrix);
 
+            var n = calculatedNewParts.ToMatrixString();
 
+            try
+            {
+                var orders = await PlaceOrder(calculatedNewParts, completedPartsForP1);
+
+                return Ok(orders
+                    .Where(o => (o.OrderModus != 0 && Convert.ToInt32(o.OrderQuantity) != 0))
+                    .Select(o => o));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Something bad happens, {ex.Message}");
+            }
         }
 
         [HttpPost("syncresult")]
         public async Task<ActionResult> PostResultForPersistence()
         {
-            // TODO: Create Class for JSON Serialization and Persistence in DB
-            return Ok("Data sucessfully inserted");
+            var orderPlacements = new List<OrderForK>();
+
+            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
+            {
+                var body = await reader.ReadToEndAsync();
+                if (body.Length != 0)
+                {
+                    JObject o = JObject.Parse(body);
+                    JArray a = (JArray)o["Materialplanning"];
+                    orderPlacements = a.ToObject<List<OrderForK>>();
+                }
+            }
+
+            try
+            {
+                if (orderPlacements != null)
+                {
+                    await _db.AddRangeAsync(orderPlacements);
+                }
+
+                await _db.SaveChangesAsync();
+
+                return Ok("Data sucessfully inserted");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Something went wrong, {ex.Message}");
+            }
         }
 
         [NonAction]
@@ -133,6 +189,7 @@ namespace IBSYS.PPS.Controllers
 
             return m.MaterialNeeded;
         }
+        
         [NonAction]
         public async Task<List<Material>> FilterNestedMaterialsByName(string parts, Material ml)
         {
@@ -235,11 +292,13 @@ namespace IBSYS.PPS.Controllers
         }
 
         [NonAction]
-        public async Task PlaceOrder(Matrix<Double> requiredParts, List<Material> partsForPlanning)
+        public async Task<List<OrderForK>> PlaceOrder(Matrix<Double> requiredParts, List<Material> partsForPlanning)
         {
+            var orderPlacements = new List<OrderForK>();
+            var position = 0;
+
             foreach (var part in partsForPlanning)
             {
-                var position = 0;
 
                 var partNumber = part.MaterialName.Split(" ")[1];
 
@@ -280,13 +339,162 @@ namespace IBSYS.PPS.Controllers
                 ordersInWaitingQueue += wlwCounter.Value + wlmCounter.Value;
 
                 // TODO: Get additional required K parts resulting from queue
+                //var additionalParts = ExtractAdditionalKParts(part, ordersInWaitingQueue);
 
+                // Logik for Decision between E or N orders and how much
+                var orderPlacement = await SetOrderTypeAndQuantity(part, stockQuantity, requiredParts.Row(position));
+                orderPlacements.Add(orderPlacement);
 
-                // TODO: Logik for Decision between E or N orders and how much
-
-
-                // TODO: Return Results
+                // Set Counter One Up
+                position++;
             }
+            return orderPlacements;
+        }
+        
+        [NonAction]
+        public async Task<List<Material>> ExtractAdditionalKParts(Material material, int orderInQueue)
+        {
+            var isPartOf = await _db.SelfProductionItems
+                .AsNoTracking()
+                .Where(sp => sp.ItemNumber.Equals(material.MaterialName))
+                .Select(sp => sp)
+                .FirstOrDefaultAsync();
+
+            var bicycleNumber = "";
+
+            switch (isPartOf.Usage)
+            {
+                case "K":
+                    bicycleNumber = "P1";
+                    break;
+                case "D":
+                    bicycleNumber = "P2";
+                    break;
+                case "H":
+                    bicycleNumber = "P3";
+                    break;
+                default:
+                    bicycleNumber = "P1";
+                    break;
+            }
+
+            // Extract bicycle per number for filtering the needed materials
+            var bicycleParts = await _db.BillOfMaterials
+                .AsNoTracking()
+                .Include(b => b.RequiredMaterials)
+                .Select(b => b)
+                .FirstOrDefaultAsync(b => b.ProductName.Equals(bicycleNumber));
+
+            var partsOutOfQueue = new List<Material>();
+
+            bicycleParts.RequiredMaterials.ForEach(async b =>
+            {
+                var parts = await FilterKMaterialsByNameAndEPart("K", material.MaterialName, b);
+                partsOutOfQueue.AddRange(parts);
+            });
+
+            var summedParts = SumFilteredMaterials(partsOutOfQueue);
+
+            var ePartsVec = Vector<Double>.Build.DenseOfEnumerable(summedParts.Select(e => Convert.ToDouble(e.QuantityNeeded)));
+
+            if (orderInQueue == 0)
+            {
+                for (var i = 0; i < partsOutOfQueue.Count(); i++)
+                {
+                    partsOutOfQueue[i].QuantityNeeded = (int)ePartsVec[i];
+                }
+                return partsOutOfQueue;
+            }
+            else
+            {
+                var additionalPartsNeeded = ePartsVec.Multiply(orderInQueue);
+                for (var i = 0; i < partsOutOfQueue.Count(); i++)
+                {
+                    partsOutOfQueue[i].QuantityNeeded = (int)additionalPartsNeeded[i];
+                }
+                return partsOutOfQueue;
+            }
+        }
+        
+        [NonAction]
+        public async Task<OrderForK> SetOrderTypeAndQuantity(Material material, string stockQuantity, Vector<Double> accordingRequirements)
+        {
+            var kPart = await _db.PurchasedItems
+                .AsNoTracking()
+                .Where(sp => sp.ItemNumber.Equals(material.MaterialName))
+                .Select(sp => sp)
+                .FirstOrDefaultAsync();
+
+            var materialNumber = material.MaterialName.Split(" ")[1];
+
+            var futureInwardMovement = await _db.FutureInwardStockMovement
+                .AsNoTracking()
+                .Where(f => f.Article.Equals(materialNumber))
+                .Select(f => f.Amount)
+                .FirstOrDefaultAsync();
+
+            var deliveryDuration = kPart.ProcureLeadTime;
+            var deviation = kPart.Deviation;
+
+            var discountQuantity = kPart.DiscountQuantity;
+
+            var stock = Convert.ToInt32(stockQuantity);
+
+            var maxDeliveryDuration = deliveryDuration + deviation;
+            var daysUntilNextDelivery = Math.Ceiling(maxDeliveryDuration * 5);
+
+            var stockLasts = DaysStockWillLast(stock, Convert.ToInt32(futureInwardMovement), accordingRequirements);
+
+            var orderAmount = 0;
+            var orderType = 0;
+
+            if (stockLasts < daysUntilNextDelivery)
+            {
+                // Fast Order
+                var daysTillFastDeliveryAvailable = Math.Ceiling(deliveryDuration * 2.5);
+                if (stockLasts < daysTillFastDeliveryAvailable + 5)
+                {
+                    orderType = 4;
+                    orderAmount = discountQuantity;
+                }
+            }
+            else
+            {
+                // Normal Order
+                if (stockLasts < daysUntilNextDelivery + 5)
+                {
+                    orderType = 5;
+                    orderAmount = discountQuantity;
+                }
+            }
+            return new OrderForK
+            {
+                PartName = kPart.ItemNumber,
+                OrderQuantity = orderAmount.ToString(),
+                OrderModus = orderType
+            };
+        }
+        
+        [NonAction]
+        public int DaysStockWillLast(int stockAmount, int futureInward, Vector<Double> requirements)
+        {
+            
+            var lastForDays = 0;
+            foreach (var req in requirements)
+            {
+                if (stockAmount + futureInward - req >= 0)
+                {
+                    stockAmount -= (int)req;
+                    lastForDays += 5;
+                }
+                else
+                {
+                    var averageRequirement = req / 5;
+                    lastForDays += Convert.ToInt32(Math.Floor(stockAmount / averageRequirement));
+                    break;
+                }
+            }
+            return lastForDays;
         }
     }
 }

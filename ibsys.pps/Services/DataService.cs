@@ -1,12 +1,13 @@
 ﻿using IBSYS.PPS.Models;
+using System.Threading.Tasks;
 
 namespace IBSYS.PPS.Services
 {
     public class DataService
     {
-        public void InsertDataInFreshDb(IbsysDatabaseContext _db)
+        public async Task InsertDataInFreshDb(IbsysDatabaseContext _db)
         {
-            SeedData.Initialize(_db);
+            await SeedData.Initialize(_db);
         }
     }
 }

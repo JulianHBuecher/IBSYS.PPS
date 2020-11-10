@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
+using System.Threading.Tasks;
 
 namespace IBSYS.PPS.Models
 {
     public static class SeedData
     {
-        public static async void Initialize(IbsysDatabaseContext context)
+        public static async Task Initialize(IbsysDatabaseContext context)
         {
             // Is the data initially seeded?
             if (context.BillOfMaterials.Any() || context.LaborAndMachineCosts.Any() || context.SelfProductionItems.Any()
@@ -432,7 +432,7 @@ namespace IBSYS.PPS.Models
                     new LaborAndMachineCosts() { Workplace=15,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.05,IdleTimeMachineCosts=0.01},
                 };
 
-            // Noch Verwendung in den unterschiedlichen Produkten einfügen
+            // Rüstzeit und Durchlaufzeiten ergänzen
             var initialStockEParts = new List<SelfProductionItems>()
                 {
                     new SelfProductionItems(){ ItemNumber="P 1", Description="Children's bicycle", ItemValue=156.13, QuantityInStock=100 },

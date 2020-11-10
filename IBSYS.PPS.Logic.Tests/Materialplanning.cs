@@ -1323,10 +1323,5 @@ namespace IBSYS.PPS.Logic.Tests
             }
             return listForInsert.OrderBy(p => Convert.ToInt32(p.MaterialName.Split(" ")[1])).ToList();
         }
-
-        public void PlaceOrder(Matrix<Double> requiredParts)
-        {
-
-        }
     }
 }

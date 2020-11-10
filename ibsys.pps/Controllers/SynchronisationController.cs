@@ -46,11 +46,11 @@ namespace IBSYS.PPS.Controllers
 
             try
             {
-                _db.Database.EnsureDeleted();
+                await _db.Database.EnsureDeletedAsync();
 
-                _db.Database.EnsureCreated();
+                await _db.Database.EnsureCreatedAsync();
 
-                _service.InsertDataInFreshDb(_db);
+                await _service.InsertDataInFreshDb(_db);
 
                 await _db.FutureInwardStockMovement
                     .AddRangeAsync(resultFromLastPeriod.Futureinwardstockmovement.Order);
@@ -120,6 +120,8 @@ namespace IBSYS.PPS.Controllers
                 await _db.Forecasts.AddAsync(resultFromLastPeriod.Forecast);
 
                 await _db.SaveChangesAsync();
+
+                await _db.DisposeAsync();
 
                 return Ok("Data sucessfully inserted!");
             }

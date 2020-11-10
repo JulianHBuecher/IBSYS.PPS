@@ -1,6 +1,7 @@
 ﻿using IBSYS.PPS.Models.Disposition;
 using IBSYS.PPS.Models.Generated;
 using IBSYS.PPS.Models.Input;
+using IBSYS.PPS.Models.Materialplanning;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Newtonsoft.Json;
@@ -34,6 +35,7 @@ namespace IBSYS.PPS.Models
         public DbSet<PlannedWarehouseStock> PlannedWarehouseStocks { get; set; }
         public DbSet<Forecast> Forecasts { get; set; }
         public DbSet<SellDirectItem> SellDirectItems { get; set; }
+        public DbSet<OrderForK> OrdersForK { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
