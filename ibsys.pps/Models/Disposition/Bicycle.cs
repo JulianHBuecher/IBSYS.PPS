@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 
 namespace IBSYS.PPS.Models.Disposition
@@ -19,13 +19,13 @@ namespace IBSYS.PPS.Models.Disposition
         [JsonIgnore]
         public int ID { get; set; }
         public string Name { get; set; }
-        [JsonPropertyName("Orders From Queue (previous part)")]
+        [JsonProperty("Orders From Queue (previous part)")]
         public string? OrdersInQueueInherit { get; set; }
         public string PlannedWarehouseFollowing { get; set; }
         public string WarehouseStockPassed { get; set; }
-        [JsonPropertyName("Orders From Queue")]
+        [JsonProperty("Orders From Queue")]
         public string OrdersInQueueOwn { get; set; }
-        [JsonPropertyName("Work In Progress")]
+        [JsonProperty("Work In Progress")]
         public string Wip { get; set; }
         public string Quantity { get; set; }
     }
