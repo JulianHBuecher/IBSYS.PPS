@@ -7,8 +7,8 @@ namespace IBSYS.PPS.Models.Input
         [XmlAttribute(AttributeName = "type")]
         public string Type { get; set; }
         [XmlAttribute(AttributeName = "losequantity")]
-        public int LoseQuantity { get; set; }
+        public string LoseQuantity { get; set; }
         [XmlAttribute(AttributeName = "delay")]
-        public int Delay { get; set; }
+        public string Delay { get; set; }
     }
 }

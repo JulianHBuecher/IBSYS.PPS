@@ -1,36 +1,32 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using System.Xml.Serialization;
 
 namespace IBSYS.PPS.Models.Disposition
 {
     public class Bicycle
     {
-        public List<BicyclePart> parts { get; set; }
+        public List<BicyclePart> Parts { get; set; }
     }
 
     public class BicyclePart
     {
-        public string name { get; set; }
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [XmlIgnore]
+        [JsonIgnore]
+        public int ID { get; set; }
+        public string Name { get; set; }
         [JsonPropertyName("Orders From Queue (previous part)")]
-        public string? ordersInQueueInherit { get; set; }
-        public string plannedWarehouseFollowing { get; set; }
-        public string warehouseStockPassed { get; set; }
+        public string? OrdersInQueueInherit { get; set; }
+        public string PlannedWarehouseFollowing { get; set; }
+        public string WarehouseStockPassed { get; set; }
         [JsonPropertyName("Orders From Queue")]
-        public string ordersInQueueOwn { get; set; }
+        public string OrdersInQueueOwn { get; set; }
         [JsonPropertyName("Work In Progress")]
-        public string wip { get; set; }
-        public string quantity { get; set; }
-
-        //public BicyclePart(string name, string ordersInQueueInherit = null, string plannedWareHouseFollowing = null,
-        //    string wareHouseStockPassed = null, string ordersInQueueOwn = null, string wip = null, string quantity = null)
-        //{
-        //    this.name = name;
-        //    this.ordersInQueueInherit = ordersInQueueInherit;
-        //    this.plannedWarehouseFollowing = plannedWarehouseFollowing;
-        //    this.warehouseStockPassed = warehouseStockPassed;
-        //    this.ordersInQueueOwn = ordersInQueueOwn;
-        //    this.wip = wip;
-        //    this.quantity = quantity;
-        //}
+        public string Wip { get; set; }
+        public string Quantity { get; set; }
     }
 }

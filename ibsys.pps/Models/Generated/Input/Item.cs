@@ -10,7 +10,7 @@ namespace IBSYS.PPS.Models.Input
         [XmlAttribute("article")]
         public string Article { get; set; }
         [XmlAttribute("quantity")]
-        public int Quantity { get; set; }
+        public string Quantity { get; set; }
     }
 
     public class SellDirectItem : SellWishItem
@@ -21,8 +21,8 @@ namespace IBSYS.PPS.Models.Input
         [JsonIgnore]
         public int Id { get; set; }
         [XmlAttribute("price")]
-        public double Price { get; set; }
+        public string Price { get; set; }
         [XmlAttribute("penalty")]
-        public double Penalty { get; set; }
+        public string Penalty { get; set; }
     }
 }

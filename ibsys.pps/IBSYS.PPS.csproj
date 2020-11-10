@@ -63,6 +63,8 @@
       <Compile Remove="Migrations\20201109204005_Modelbuilder_Material_Added.Designer.cs" />
       <Compile Remove="Migrations\20201109205421_Entity_Material_Updated.cs" />
       <Compile Remove="Migrations\20201109205421_Entity_Material_Updated.Designer.cs" />
+      <Compile Remove="Migrations\20201110143243_Disposition_Added.cs" />
+      <Compile Remove="Migrations\20201110143243_Disposition_Added.Designer.cs" />
     </ItemGroup>
 
     <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">

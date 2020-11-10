@@ -54,14 +54,13 @@ namespace IBSYS.PPS.Controllers
 
             var disposition = await ExecuteDisposition(bicycle, Convert.ToInt32(productionOrder[0]), plannedStocks);
 
-
             return Ok(disposition);
         }
 
         [HttpPost("syncresult")]
         public async Task<ActionResult> PostResultForPersistence()
         {
-            var plannedStocks = new List<PlannedWarehouseStock>();
+            var productionOrders = new List<BicyclePart>();
 
             using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
             {
@@ -69,16 +68,16 @@ namespace IBSYS.PPS.Controllers
                 if (body.Length != 0)
                 {
                     JObject o = JObject.Parse(body);
-                    JArray a = (JArray)o["PlannedStocks"];
-                    plannedStocks = a.ToObject<List<PlannedWarehouseStock>>();
+                    JArray a = (JArray)o["DispositionResult"];
+                    productionOrders = a.ToObject<List<BicyclePart>>();
                 }
             }
 
             try
             {
-                if (plannedStocks != null)
+                if (productionOrders != null)
                 {
-                    await _db.AddRangeAsync(plannedStocks);
+                    await _db.AddRangeAsync(productionOrders);
                 }
 
                 await _db.SaveChangesAsync();
@@ -153,14 +152,14 @@ namespace IBSYS.PPS.Controllers
                     var queueFromPrevious = disposition.Last();
                     parts = await CalculateParts(
                         partsForDisposition[i].Select(a => a.ToString()).ToList(),
-                        Convert.ToInt32(queueFromPrevious.quantity),
-                        Convert.ToInt32(queueFromPrevious.ordersInQueueOwn),
+                        Convert.ToInt32(queueFromPrevious.Quantity),
+                        Convert.ToInt32(queueFromPrevious.OrdersInQueueOwn),
                         plannedWarehouseStock);
                     disposition.AddRange(parts);
                 }
             }
 
-            return new Bicycle { parts = disposition };
+            return new Bicycle { Parts = disposition };
         }
 
         [NonAction]
@@ -241,13 +240,13 @@ namespace IBSYS.PPS.Controllers
                 
                 requiredMaterials.Add(new BicyclePart
                 {
-                    name = material.ToString(),
-                    ordersInQueueInherit = ordersInQueueFromPrevious.ToString(),
-                    plannedWarehouseFollowing = plannedStock.ToString(),
-                    warehouseStockPassed = warehouseStock.ToString(),
-                    ordersInQueueOwn = ordersInWaitingQueue.ToString(),
-                    wip = wip.ToString(),
-                    quantity = requiredParts.ToString()
+                    Name = material.ToString(),
+                    OrdersInQueueInherit = ordersInQueueFromPrevious.ToString(),
+                    PlannedWarehouseFollowing = plannedStock.ToString(),
+                    WarehouseStockPassed = warehouseStock.ToString(),
+                    OrdersInQueueOwn = ordersInWaitingQueue.ToString(),
+                    Wip = wip.ToString(),
+                    Quantity = requiredParts.ToString()
                 });
             }
 

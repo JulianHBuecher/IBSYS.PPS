@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using IBSYS.PPS.Models;
+using IBSYS.PPS.Models.Disposition;
+using IBSYS.PPS.Models.Input;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace IBSYS.PPS.Controllers
@@ -25,8 +29,113 @@ namespace IBSYS.PPS.Controllers
         [HttpGet]
         public async Task<ActionResult> GetInputFile()
         {
-            // TODO: Logik for Input-File
-            return Ok("Input File");
+            var forecast = await _db.Forecasts
+                .AsNoTracking()
+                .SingleOrDefaultAsync();
+
+            var selldirect = await _db.SellDirectItems
+                .AsNoTracking()
+                .Select(s => s)
+                .ToListAsync();
+
+            var orders = await _db.OrdersForK
+                .AsNoTracking()
+                .Select(o => o)
+                .ToListAsync();
+
+            var productionOrdersEParts = await _db.DispositionEParts
+                .AsNoTracking()
+                .Select(d => d)
+                .ToListAsync();
+
+            var productionList = new List<Production>();
+
+            var summedOrdersEParts = SumFilteredMaterials(productionOrdersEParts);
+
+            productionList.AddRange(
+                summedOrdersEParts.Select(pe => new Production
+                {
+                    Article = Regex.Match(pe.Name, @"\d+").Value,
+                    Quantity = pe.Quantity
+                }));
+
+            // TODO: Extracting Workingtime out of DB
+            var workingtimeList = new List<Workingtime>
+            {
+                new Workingtime { station = "1", shift = "1", overtime = "0" },
+                new Workingtime { station = "2", shift = "1", overtime = "0" },
+                new Workingtime { station = "3", shift = "1", overtime = "0" },
+                new Workingtime { station = "4", shift = "1", overtime = "0" },
+                new Workingtime { station = "6", shift = "1", overtime = "0" },
+                new Workingtime { station = "7", shift = "1", overtime = "0" },
+                new Workingtime { station = "8", shift = "1", overtime = "0" },
+                new Workingtime { station = "9", shift = "1", overtime = "0" },
+                new Workingtime { station = "10", shift = "1", overtime = "0" },
+                new Workingtime { station = "11", shift = "1", overtime = "0" },
+                new Workingtime { station = "12", shift = "1", overtime = "0" },
+                new Workingtime { station = "13", shift = "1", overtime = "0" },
+                new Workingtime { station = "14", shift = "1", overtime = "0" },
+                new Workingtime { station = "15", shift = "1", overtime = "0" }
+            };
+
+            var inputFile = new Input
+            {
+                Qualitycontrol = new Qualitycontrol
+                {
+                    Type = "no",
+                    LoseQuantity = "0",
+                    Delay = "0"
+                },
+                PrognosedItems = new List<SellWishItem>
+                {
+                    new SellWishItem
+                    {
+                        Article = "1",
+                        Quantity = forecast.P1
+                    },
+                    new SellWishItem
+                    {
+                        Article = "2",
+                        Quantity = forecast.P2
+                    },
+                    new SellWishItem
+                    {
+                        Article = "3",
+                        Quantity = forecast.P3
+                    }
+                }.ToArray(),
+                DirectSellItems = selldirect.Select(s => new SellDirectItem
+                {
+                    Article = s.Article,
+                    Quantity = s.Quantity,
+                    Price = s.Price,
+                    Penalty = s.Penalty
+                }).ToArray(),
+                Orders = orders.Select(o => new Order
+                {
+                    Article = Regex.Match(o.PartName, @"\d+").Value,
+                    Quantity = o.OrderQuantity,
+                    Modus = o.OrderModus.ToString()
+                }).ToArray(),
+                Productions = productionList.ToArray(),
+                Workingtimes = workingtimeList.ToArray()
+            };
+
+            return Ok(inputFile);
+        }
+
+        [NonAction]
+        public List<BicyclePart> SumFilteredMaterials(List<BicyclePart> materials)
+        {
+            var partsOrderedAndSummed = materials.GroupBy(p => p.Name).OrderBy(p => p.Key)
+                .Select(p => new BicyclePart
+                {
+                    Name = p.Key,
+                    Quantity = p.Select(pp => Convert.ToInt32(pp.Quantity)).Sum().ToString()
+                })
+                .ToList();
+
+            return partsOrderedAndSummed;
         }
     }
 }

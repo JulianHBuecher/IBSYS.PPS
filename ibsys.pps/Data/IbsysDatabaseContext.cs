@@ -36,6 +36,7 @@ namespace IBSYS.PPS.Models
         public DbSet<Forecast> Forecasts { get; set; }
         public DbSet<SellDirectItem> SellDirectItems { get; set; }
         public DbSet<OrderForK> OrdersForK { get; set; }
+        public DbSet<BicyclePart> DispositionEParts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

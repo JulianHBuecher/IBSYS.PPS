@@ -7,11 +7,11 @@ namespace IBSYS.PPS.Models.Input
 {
     public class Order
     {
-        [XmlAttribute]
-        public string article { get; set; }
-        [XmlAttribute]
-        public int quantity { get; set; }
-        [XmlAttribute]
-        public string modus { get; set; }
+        [XmlAttribute("article")]
+        public string Article { get; set; }
+        [XmlAttribute("quantity")]
+        public string Quantity { get; set; }
+        [XmlAttribute("modus")]
+        public string Modus { get; set; }
     }
 }
