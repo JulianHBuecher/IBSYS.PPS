@@ -116,13 +116,21 @@ namespace IBSYS.PPS.Controllers
                                 Batch = Convert.ToInt32(wp.Batch)
                             }).ToList() : new List<WaitinglistForOrdersInWork>());
 
+                await _db.SetupEvents.AddRangeAsync(
+                    resultFromLastPeriod.Idletimecosts.Workplace.Select(wp =>
+                        new SetupEvents
+                        {
+                            WorkplaceId = wp.Id,
+                            NumberOfSetupEvents = Convert.ToInt32(wp.Setupevents),
+                        }).ToList());
+
                 // Inserting Forecasts for Sellwish Input
                 await _db.Forecasts.AddAsync(resultFromLastPeriod.Forecast);
 
                 await _db.SaveChangesAsync();
 
                 await _db.DisposeAsync();
-
+                
                 return Ok("Data sucessfully inserted!");
             }
             catch (Exception ex)
