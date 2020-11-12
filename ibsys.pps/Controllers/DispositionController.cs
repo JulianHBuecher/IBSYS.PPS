@@ -188,9 +188,11 @@ namespace IBSYS.PPS.Controllers
                 var waitinglistMissingParts = await _db.WaitinglistStock.AsNoTracking()
                     .Include(w => w.WaitinglistForStock).ThenInclude(w => w.WaitinglistForWorkplaceStock)
                     .Select(w => w.WaitinglistForStock
-                        .Select(ws => ws.WaitinglistForWorkplaceStock
-                        .Where(wss => wss.Item.Equals(partNumber))
-                        .ToList())).FirstOrDefaultAsync();
+                        .SelectMany(ws => ws.WaitinglistForWorkplaceStock
+                            .Where(wss => wss.Item.Equals(partNumber))
+                            .Select(wss => wss))).ToListAsync();
+
+                waitinglistMissingParts = waitinglistMissingParts.Where(ws => ws.Any()).Select(ws => ws).ToList();
 
                 var workInProgress = await _db.OrdersInWork.AsNoTracking()
                     .Where(oiw => oiw.Item.Equals(partNumber))
