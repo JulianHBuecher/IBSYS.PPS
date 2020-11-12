@@ -3,15 +3,17 @@ using System;
 using IBSYS.PPS.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace IBSYS.PPS.Migrations
 {
     [DbContext(typeof(IbsysDatabaseContext))]
-    partial class IbsysDatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20201112152515_CapacityPlanningResults_Added")]
+    partial class CapacityPlanningResults_Added
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -22,7 +22,7 @@ docker pull postgres
 ```
 Für den Start der Datenbank wird im Anschluss folgender Befehl verwendet:
 ```
-docker run --name db -e POSTGRES_USER=pps -e POSTGRES_PASSWORD=ppspassword -e POSTGRES_DB=ibsys --rm -d postgres
+docker run --name db -p 5432:5432 -e POSTGRES_USER=pps -e POSTGRES_PASSWORD=ppspassword -e POSTGRES_DB=ibsys --rm -d postgres
 ```
 
 ### Starten des Projektes
