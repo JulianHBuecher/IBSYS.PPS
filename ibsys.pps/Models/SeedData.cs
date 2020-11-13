@@ -16,22 +16,22 @@ namespace IBSYS.PPS.Models
             }
 
             await context.AddAsync(new BillOfMaterial()
-                {
-                    ProductName = "P1",
-                    RequiredMaterials = new List<Material>()
+            {
+                ProductName = "P1",
+                RequiredMaterials = new List<Material>()
                     {
-                        new Material() { MaterialName = "K 21", QuantityNeeded = 1 },
-                        new Material() { MaterialName = "K 24", QuantityNeeded = 1 },
-                        new Material() { MaterialName = "K 27", QuantityNeeded = 1 },
+                        new Material() { MaterialName = "K 21", QuantityNeeded = 1, DirectAccess = new string[] { "1" } },
+                        new Material() { MaterialName = "K 24", QuantityNeeded = 1, DirectAccess = new string[] { "1", "2", "3", "16", "29", "30", "31", "49", "50", "51", "54", "55", "56" } },
+                        new Material() { MaterialName = "K 27", QuantityNeeded = 1, DirectAccess = new string[] { "1", "2", "3", "31", "51", "56" } },
                         new Material()
                         {
                             MaterialName = "E 26",
                             QuantityNeeded = 1,
                             MaterialNeeded = new List<Material>()
                             {
-                                new Material() { MaterialName = "K 44", QuantityNeeded = 2 },
-                                new Material() { MaterialName = "K 47", QuantityNeeded = 1 },
-                                new Material() { MaterialName = "K 48", QuantityNeeded = 2 }
+                                new Material() { MaterialName = "K 44", QuantityNeeded = 2, DirectAccess = new string[] { "17" } },
+                                new Material() { MaterialName = "K 47", QuantityNeeded = 1, DirectAccess = new string[] { "26" } },
+                                new Material() { MaterialName = "K 48", QuantityNeeded = 2, DirectAccess = new string[] { } }
                             }
                         },
                         new Material()
@@ -40,19 +40,19 @@ namespace IBSYS.PPS.Models
                             QuantityNeeded = 1,
                             MaterialNeeded = new List<Material>()
                             {
-                                new Material() { MaterialName = "K 24", QuantityNeeded = 1 },
-                                new Material() { MaterialName = "K 27", QuantityNeeded = 1 },
+                                new Material() { MaterialName = "K 24", QuantityNeeded = 1, DirectAccess = new string[] { "1", "2", "3", "16", "29", "30", "31", "49", "50", "51", "54", "55", "56" } },
+                                new Material() { MaterialName = "K 27", QuantityNeeded = 1, DirectAccess = new string[] { "1", "2", "3", "31", "51", "56" } },
                                 new Material()
                                 {
                                     MaterialName = "E 16",
                                     QuantityNeeded = 1,
                                     MaterialNeeded = new List<Material>()
                                     {
-                                        new Material() { MaterialName = "K 24", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 28", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 40", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 41", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 42", QuantityNeeded = 2 }
+                                        new Material() { MaterialName = "K 24", QuantityNeeded = 1, DirectAccess = new string[] { "1", "2", "3", "16", "29", "30", "31", "49", "50", "51", "54", "55", "56" } },
+                                        new Material() { MaterialName = "K 28", QuantityNeeded = 1, DirectAccess = new string[] { } },
+                                        new Material() { MaterialName = "K 40", QuantityNeeded = 1, DirectAccess = new string[] { "16" } },
+                                        new Material() { MaterialName = "K 41", QuantityNeeded = 1, DirectAccess = new string[] { "16" } },
+                                        new Material() { MaterialName = "K 42", QuantityNeeded = 2, DirectAccess = new string[] { "16" } }
                                     }
                                 },
                                 new Material()
@@ -61,10 +61,10 @@ namespace IBSYS.PPS.Models
                                     QuantityNeeded = 1,
                                     MaterialNeeded = new List<Material>()
                                     {
-                                        new Material() { MaterialName = "K 43", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 44", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 45", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 46", QuantityNeeded = 1 }
+                                        new Material() { MaterialName = "K 43", QuantityNeeded = 1, DirectAccess = new string[] { "17" } },
+                                        new Material() { MaterialName = "K 44", QuantityNeeded = 1, DirectAccess = new string[] { "17" } },
+                                        new Material() { MaterialName = "K 45", QuantityNeeded = 1, DirectAccess = new string[] { "17" } },
+                                        new Material() { MaterialName = "K 46", QuantityNeeded = 1, DirectAccess = new string[] { "17" } }
                                     }
                                 },
                                 new Material()
@@ -73,18 +73,18 @@ namespace IBSYS.PPS.Models
                                     QuantityNeeded = 1,
                                     MaterialNeeded = new List<Material>()
                                     {
-                                        new Material() { MaterialName = "K 24", QuantityNeeded = 2 },
-                                        new Material() { MaterialName = "K 25", QuantityNeeded = 2 },
+                                        new Material() { MaterialName = "K 24", QuantityNeeded = 2, DirectAccess = new string[] { "1", "2", "3", "16", "29", "30", "31", "49", "50", "51", "54", "55", "56" } },
+                                        new Material() { MaterialName = "K 25", QuantityNeeded = 2, DirectAccess = new string[] { "29", "30", "49", "50", "54", "55" } },
                                         new Material()
                                         {
                                             MaterialName = "E 4",
                                             QuantityNeeded = 1,
                                             MaterialNeeded = new List<Material>()
                                             {
-                                                new Material() { MaterialName = "K 35", QuantityNeeded = 2 },
-                                                new Material() { MaterialName = "K 36", QuantityNeeded = 1 },
-                                                new Material() { MaterialName = "K 52", QuantityNeeded = 1 },
-                                                new Material() { MaterialName = "K 53", QuantityNeeded = 36 }
+                                                new Material() { MaterialName = "K 35", QuantityNeeded = 2, DirectAccess = new string[] { "4", "5", "6", "7", "8", "9" } },
+                                                new Material() { MaterialName = "K 36", QuantityNeeded = 1, DirectAccess = new string[] { "4", "5", "6" }},
+                                                new Material() { MaterialName = "K 52", QuantityNeeded = 1, DirectAccess = new string[] { } },
+                                                new Material() { MaterialName = "K 53", QuantityNeeded = 36, DirectAccess = new string[] { } }
                                             }
                                         },
                                         new Material()
@@ -93,8 +93,8 @@ namespace IBSYS.PPS.Models
                                             QuantityNeeded = 1,
                                             MaterialNeeded = new List<Material>()
                                             {
-                                                new Material() { MaterialName = "K 32", QuantityNeeded = 1 },
-                                                new Material() { MaterialName = "K 39", QuantityNeeded = 1 }
+                                                new Material() { MaterialName = "K 32", QuantityNeeded = 1, DirectAccess = new string[] { "10", "11", "12", "13", "14", "15", "18", "19", "20" } },
+                                                new Material() { MaterialName = "K 39", QuantityNeeded = 1, DirectAccess = new string[] { } }
                                             }
                                         },
                                         new Material()
@@ -103,19 +103,19 @@ namespace IBSYS.PPS.Models
                                             QuantityNeeded = 1,
                                             MaterialNeeded = new List<Material>()
                                             {
-                                                new Material() { MaterialName = "K 24", QuantityNeeded = 2 },
-                                                new Material() { MaterialName = "K 25", QuantityNeeded = 2 },
+                                                new Material() { MaterialName = "K 24", QuantityNeeded = 2, DirectAccess = new string[] { "1", "2", "3", "16", "29", "30", "31", "49", "50", "51", "54", "55", "56" } },
+                                                new Material() { MaterialName = "K 25", QuantityNeeded = 2, DirectAccess = new string[] { "29", "30", "49", "50", "54", "55" } },
                                                 new Material()
                                                 {
                                                     MaterialName = "E 7",
                                                     QuantityNeeded = 1,
                                                     MaterialNeeded = new List<Material>()
                                                     {
-                                                        new Material() { MaterialName = "K 35", QuantityNeeded = 2 },
-                                                        new Material() { MaterialName = "K 37", QuantityNeeded = 1 },
-                                                        new Material() { MaterialName = "K 38", QuantityNeeded = 1 },
-                                                        new Material() { MaterialName = "K 52", QuantityNeeded = 1 },
-                                                        new Material() { MaterialName = "K 53", QuantityNeeded = 36 }
+                                                        new Material() { MaterialName = "K 35", QuantityNeeded = 2, DirectAccess = new string[] { "4", "5", "6", "7", "8", "9" } },
+                                                        new Material() { MaterialName = "K 37", QuantityNeeded = 1, DirectAccess = new string[] { "7", "8", "9" } },
+                                                        new Material() { MaterialName = "K 38", QuantityNeeded = 1, DirectAccess = new string[] { "7", "8", "9" } },
+                                                        new Material() { MaterialName = "K 52", QuantityNeeded = 1, DirectAccess = new string[] { } },
+                                                        new Material() { MaterialName = "K 53", QuantityNeeded = 36, DirectAccess = new string[] { } }
                                                     }
                                                 },
                                                 new Material()
@@ -124,8 +124,8 @@ namespace IBSYS.PPS.Models
                                                     QuantityNeeded = 1,
                                                     MaterialNeeded = new List<Material>()
                                                     {
-                                                        new Material() { MaterialName = "K 32", QuantityNeeded = 1 },
-                                                        new Material() { MaterialName = "K 39", QuantityNeeded = 1 }
+                                                        new Material() { MaterialName = "K 32", QuantityNeeded = 1, DirectAccess = new string[] { "10", "11", "12", "13", "14", "15", "18", "19", "20" } },
+                                                        new Material() { MaterialName = "K 39", QuantityNeeded = 1, DirectAccess = new string[] { } }
                                                     }
                                                 },
                                                 new Material()
@@ -134,9 +134,9 @@ namespace IBSYS.PPS.Models
                                                     QuantityNeeded = 1,
                                                     MaterialNeeded = new List<Material>()
                                                     {
-                                                        new Material() { MaterialName = "K 28", QuantityNeeded = 3 },
-                                                        new Material() { MaterialName = "K 32", QuantityNeeded = 1 },
-                                                        new Material() { MaterialName = "K 59", QuantityNeeded = 2 }
+                                                        new Material() { MaterialName = "K 28", QuantityNeeded = 3, DirectAccess = new string[] { } },
+                                                        new Material() { MaterialName = "K 32", QuantityNeeded = 1, DirectAccess = new string[] { "10", "11", "12", "13", "14", "15", "18", "19", "20" } },
+                                                        new Material() { MaterialName = "K 59", QuantityNeeded = 2, DirectAccess = new string[] { } }
                                                     }
                                                 },
                                             }
@@ -153,18 +153,18 @@ namespace IBSYS.PPS.Models
                 ProductName = "P2",
                 RequiredMaterials = new List<Material>()
                     {
-                        new Material() { MaterialName = "K 22", QuantityNeeded = 1 },
-                        new Material() { MaterialName = "K 24", QuantityNeeded = 1 },
-                        new Material() { MaterialName = "K 27", QuantityNeeded = 1 },
+                        new Material() { MaterialName = "K 22", QuantityNeeded = 1, DirectAccess = new string[] { "2" } },
+                        new Material() { MaterialName = "K 24", QuantityNeeded = 1, DirectAccess = new string[] { "1", "2", "3", "16", "29", "30", "31", "49", "50", "51", "54", "55", "56" } },
+                        new Material() { MaterialName = "K 27", QuantityNeeded = 1, DirectAccess = new string[] { "1", "2", "3", "31", "51", "56" } },
                         new Material()
                         {
                             MaterialName = "E 26",
                             QuantityNeeded = 1,
                             MaterialNeeded = new List<Material>()
                             {
-                                new Material() { MaterialName = "K 44", QuantityNeeded = 2 },
-                                new Material() { MaterialName = "K 47", QuantityNeeded = 1 },
-                                new Material() { MaterialName = "K 48", QuantityNeeded = 2 }
+                                new Material() { MaterialName = "K 44", QuantityNeeded = 2, DirectAccess = new string[] { "17" } },
+                                new Material() { MaterialName = "K 47", QuantityNeeded = 1, DirectAccess = new string[] { "26" } },
+                                new Material() { MaterialName = "K 48", QuantityNeeded = 2, DirectAccess = new string[] { } }
                             }
                         },
                         new Material()
@@ -173,19 +173,19 @@ namespace IBSYS.PPS.Models
                             QuantityNeeded = 1,
                             MaterialNeeded = new List<Material>()
                             {
-                                new Material() { MaterialName = "K 24", QuantityNeeded = 1 },
-                                new Material() { MaterialName = "K 27", QuantityNeeded = 1 },
+                                new Material() { MaterialName = "K 24", QuantityNeeded = 1, DirectAccess = new string[] { "1", "2", "3", "16", "29", "30", "31", "49", "50", "51", "54", "55", "56" } },
+                                new Material() { MaterialName = "K 27", QuantityNeeded = 1, DirectAccess = new string[] { "1", "2", "3", "31", "51", "56" }  },
                                 new Material()
                                 {
                                     MaterialName = "E 16",
                                     QuantityNeeded = 1,
                                     MaterialNeeded = new List<Material>()
                                     {
-                                        new Material() { MaterialName = "K 24", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 28", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 40", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 41", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 42", QuantityNeeded = 2 }
+                                        new Material() { MaterialName = "K 24", QuantityNeeded = 1, DirectAccess = new string[] { "1", "2", "3", "16", "29", "30", "31", "49", "50", "51", "54", "55", "56" } },
+                                        new Material() { MaterialName = "K 28", QuantityNeeded = 1, DirectAccess = new string[] { } },
+                                        new Material() { MaterialName = "K 40", QuantityNeeded = 1, DirectAccess = new string[] { "16" } },
+                                        new Material() { MaterialName = "K 41", QuantityNeeded = 1, DirectAccess = new string[] { "16" } },
+                                        new Material() { MaterialName = "K 42", QuantityNeeded = 2, DirectAccess = new string[] { "16" } }
                                     }
                                 },
                                 new Material()
@@ -194,10 +194,10 @@ namespace IBSYS.PPS.Models
                                     QuantityNeeded = 1,
                                     MaterialNeeded = new List<Material>()
                                     {
-                                        new Material() { MaterialName = "K 43", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 44", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 45", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 46", QuantityNeeded = 1 }
+                                        new Material() { MaterialName = "K 43", QuantityNeeded = 1, DirectAccess = new string[] { "17" } },
+                                        new Material() { MaterialName = "K 44", QuantityNeeded = 1, DirectAccess = new string[] { "17" } },
+                                        new Material() { MaterialName = "K 45", QuantityNeeded = 1, DirectAccess = new string[] { "17" } },
+                                        new Material() { MaterialName = "K 46", QuantityNeeded = 1, DirectAccess = new string[] { "17" } }
                                     }
                                 },
                                 new Material()
@@ -206,18 +206,18 @@ namespace IBSYS.PPS.Models
                                     QuantityNeeded = 1,
                                     MaterialNeeded = new List<Material>()
                                     {
-                                        new Material() { MaterialName = "K 24", QuantityNeeded = 2 },
-                                        new Material() { MaterialName = "K 25", QuantityNeeded = 2 },
+                                        new Material() { MaterialName = "K 24", QuantityNeeded = 2, DirectAccess = new string[] { "1", "2", "3", "16", "29", "30", "31", "49", "50", "51", "54", "55", "56" } },
+                                        new Material() { MaterialName = "K 25", QuantityNeeded = 2, DirectAccess = new string[] { "29", "30", "49", "50", "54", "55" } },
                                         new Material()
                                         {
                                             MaterialName = "E 5",
                                             QuantityNeeded = 1,
                                             MaterialNeeded = new List<Material>()
                                             {
-                                                new Material() { MaterialName = "K 35", QuantityNeeded = 2 },
-                                                new Material() { MaterialName = "K 36", QuantityNeeded = 1 },
-                                                new Material() { MaterialName = "K 57", QuantityNeeded = 1 },
-                                                new Material() { MaterialName = "K 58", QuantityNeeded = 36 }
+                                                new Material() { MaterialName = "K 35", QuantityNeeded = 2, DirectAccess = new string[] { "4", "5", "6", "7", "8", "9" } },
+                                                new Material() { MaterialName = "K 36", QuantityNeeded = 1, DirectAccess = new string[] { "4", "5", "6" } },
+                                                new Material() { MaterialName = "K 57", QuantityNeeded = 1, DirectAccess = new string[] { } },
+                                                new Material() { MaterialName = "K 58", QuantityNeeded = 36, DirectAccess = new string[] { } }
                                             }
                                         },
                                         new Material()
@@ -226,8 +226,8 @@ namespace IBSYS.PPS.Models
                                             QuantityNeeded = 1,
                                             MaterialNeeded = new List<Material>()
                                             {
-                                                new Material() { MaterialName = "K 32", QuantityNeeded = 1 },
-                                                new Material() { MaterialName = "K 39", QuantityNeeded = 1 }
+                                                new Material() { MaterialName = "K 32", QuantityNeeded = 1, DirectAccess = new string[] { "10", "11", "12", "13", "14", "15", "18", "19", "20" } },
+                                                new Material() { MaterialName = "K 39", QuantityNeeded = 1, DirectAccess = new string[] { } }
                                             }
                                         },
                                         new Material()
@@ -236,19 +236,19 @@ namespace IBSYS.PPS.Models
                                             QuantityNeeded = 1,
                                             MaterialNeeded = new List<Material>()
                                             {
-                                                new Material() { MaterialName = "K 24", QuantityNeeded = 2 },
-                                                new Material() { MaterialName = "K 25", QuantityNeeded = 2 },
+                                                new Material() { MaterialName = "K 24", QuantityNeeded = 2, DirectAccess = new string[] { "1", "2", "3", "16", "29", "30", "31", "49", "50", "51", "54", "55", "56" } },
+                                                new Material() { MaterialName = "K 25", QuantityNeeded = 2, DirectAccess = new string[] { "29", "30", "49", "50", "54", "55" } },
                                                 new Material()
                                                 {
                                                     MaterialName = "E 8",
                                                     QuantityNeeded = 1,
                                                     MaterialNeeded = new List<Material>()
                                                     {
-                                                        new Material() { MaterialName = "K 35", QuantityNeeded = 2 },
-                                                        new Material() { MaterialName = "K 37", QuantityNeeded = 1 },
-                                                        new Material() { MaterialName = "K 38", QuantityNeeded = 1 },
-                                                        new Material() { MaterialName = "K 57", QuantityNeeded = 1 },
-                                                        new Material() { MaterialName = "K 58", QuantityNeeded = 36 }
+                                                        new Material() { MaterialName = "K 35", QuantityNeeded = 2, DirectAccess = new string[] { "4", "5", "6", "7", "8", "9" } },
+                                                        new Material() { MaterialName = "K 37", QuantityNeeded = 1, DirectAccess = new string[] { "7", "8", "9" } },
+                                                        new Material() { MaterialName = "K 38", QuantityNeeded = 1, DirectAccess = new string[] { "7", "8", "9" } },
+                                                        new Material() { MaterialName = "K 57", QuantityNeeded = 1, DirectAccess = new string[] { } },
+                                                        new Material() { MaterialName = "K 58", QuantityNeeded = 36, DirectAccess = new string[] { } }
                                                     }
                                                 },
                                                 new Material()
@@ -257,8 +257,8 @@ namespace IBSYS.PPS.Models
                                                     QuantityNeeded = 1,
                                                     MaterialNeeded = new List<Material>()
                                                     {
-                                                        new Material() { MaterialName = "K 32", QuantityNeeded = 1 },
-                                                        new Material() { MaterialName = "K 39", QuantityNeeded = 1 }
+                                                        new Material() { MaterialName = "K 32", QuantityNeeded = 1, DirectAccess = new string[] { "10", "11", "12", "13", "14", "15", "18", "19", "20" } },
+                                                        new Material() { MaterialName = "K 39", QuantityNeeded = 1, DirectAccess = new string[] { } }
                                                     }
                                                 },
                                                 new Material()
@@ -267,9 +267,9 @@ namespace IBSYS.PPS.Models
                                                     QuantityNeeded = 1,
                                                     MaterialNeeded = new List<Material>()
                                                     {
-                                                        new Material() { MaterialName = "K 28", QuantityNeeded = 4 },
-                                                        new Material() { MaterialName = "K 32", QuantityNeeded = 1 },
-                                                        new Material() { MaterialName = "K 59", QuantityNeeded = 2 }
+                                                        new Material() { MaterialName = "K 28", QuantityNeeded = 4, DirectAccess = new string[] { } },
+                                                        new Material() { MaterialName = "K 32", QuantityNeeded = 1, DirectAccess = new string[] { "10", "11", "12", "13", "14", "15", "18", "19", "20" } },
+                                                        new Material() { MaterialName = "K 59", QuantityNeeded = 2, DirectAccess = new string[] { } }
                                                     }
                                                 },
                                             }
@@ -286,18 +286,18 @@ namespace IBSYS.PPS.Models
                 ProductName = "P3",
                 RequiredMaterials = new List<Material>()
                     {
-                        new Material() { MaterialName = "K 23", QuantityNeeded = 1 },
-                        new Material() { MaterialName = "K 24", QuantityNeeded = 1 },
-                        new Material() { MaterialName = "K 27", QuantityNeeded = 1 },
+                        new Material() { MaterialName = "K 23", QuantityNeeded = 1, DirectAccess = new string[] { "3" } },
+                        new Material() { MaterialName = "K 24", QuantityNeeded = 1, DirectAccess = new string[] { "1", "2", "3", "16", "29", "30", "31", "49", "50", "51", "54", "55", "56" } },
+                        new Material() { MaterialName = "K 27", QuantityNeeded = 1, DirectAccess = new string[] { "1", "2", "3", "31", "51", "56" }  },
                         new Material()
                         {
                             MaterialName = "E 26",
                             QuantityNeeded = 1,
                             MaterialNeeded = new List<Material>()
                             {
-                                new Material() { MaterialName = "K 44", QuantityNeeded = 2 },
-                                new Material() { MaterialName = "K 47", QuantityNeeded = 1 },
-                                new Material() { MaterialName = "K 48", QuantityNeeded = 2 }
+                                new Material() { MaterialName = "K 44", QuantityNeeded = 2, DirectAccess = new string[] { "17" } },
+                                new Material() { MaterialName = "K 47", QuantityNeeded = 1, DirectAccess = new string[] { "26" } },
+                                new Material() { MaterialName = "K 48", QuantityNeeded = 2, DirectAccess = new string[] { } }
                             }
                         },
                         new Material()
@@ -306,19 +306,19 @@ namespace IBSYS.PPS.Models
                             QuantityNeeded = 1,
                             MaterialNeeded = new List<Material>()
                             {
-                                new Material() { MaterialName = "K 24", QuantityNeeded = 1 },
-                                new Material() { MaterialName = "K 27", QuantityNeeded = 1 },
+                                new Material() { MaterialName = "K 24", QuantityNeeded = 1, DirectAccess = new string[] { "1", "2", "3", "16", "29", "30", "31", "49", "50", "51", "54", "55", "56" } },
+                                new Material() { MaterialName = "K 27", QuantityNeeded = 1, DirectAccess = new string[] { "1", "2", "3", "31", "51", "56" }  },
                                 new Material()
                                 {
                                     MaterialName = "E 16",
                                     QuantityNeeded = 1,
                                     MaterialNeeded = new List<Material>()
                                     {
-                                        new Material() { MaterialName = "K 24", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 28", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 40", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 41", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 42", QuantityNeeded = 2 }
+                                        new Material() { MaterialName = "K 24", QuantityNeeded = 1, DirectAccess = new string[] { "1", "2", "3", "16", "29", "30", "31", "49", "50", "51", "54", "55", "56" } },
+                                        new Material() { MaterialName = "K 28", QuantityNeeded = 1, DirectAccess = new string[] { } },
+                                        new Material() { MaterialName = "K 40", QuantityNeeded = 1, DirectAccess = new string[] { "16" } },
+                                        new Material() { MaterialName = "K 41", QuantityNeeded = 1, DirectAccess = new string[] { "16" } },
+                                        new Material() { MaterialName = "K 42", QuantityNeeded = 2, DirectAccess = new string[] { "16" } }
                                     }
                                 },
                                 new Material()
@@ -327,10 +327,10 @@ namespace IBSYS.PPS.Models
                                     QuantityNeeded = 1,
                                     MaterialNeeded = new List<Material>()
                                     {
-                                        new Material() { MaterialName = "K 43", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 44", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 45", QuantityNeeded = 1 },
-                                        new Material() { MaterialName = "K 46", QuantityNeeded = 1 }
+                                        new Material() { MaterialName = "K 43", QuantityNeeded = 1, DirectAccess = new string[] { "17" } },
+                                        new Material() { MaterialName = "K 44", QuantityNeeded = 1, DirectAccess = new string[] { "17" } },
+                                        new Material() { MaterialName = "K 45", QuantityNeeded = 1, DirectAccess = new string[] { "17" } },
+                                        new Material() { MaterialName = "K 46", QuantityNeeded = 1, DirectAccess = new string[] { "17" } }
                                     }
                                 },
                                 new Material()
@@ -339,18 +339,18 @@ namespace IBSYS.PPS.Models
                                     QuantityNeeded = 1,
                                     MaterialNeeded = new List<Material>()
                                     {
-                                        new Material() { MaterialName = "K 24", QuantityNeeded = 2 },
-                                        new Material() { MaterialName = "K 25", QuantityNeeded = 2 },
+                                        new Material() { MaterialName = "K 24", QuantityNeeded = 2, DirectAccess = new string[] { "1", "2", "3", "16", "29", "30", "31", "49", "50", "51", "54", "55", "56" } },
+                                        new Material() { MaterialName = "K 25", QuantityNeeded = 2, DirectAccess = new string[] { "29", "30", "49", "50", "54", "55" } },
                                         new Material()
                                         {
                                             MaterialName = "E 6",
                                             QuantityNeeded = 1,
                                             MaterialNeeded = new List<Material>()
                                             {
-                                                new Material() { MaterialName = "K 33", QuantityNeeded = 1 },
-                                                new Material() { MaterialName = "K 34", QuantityNeeded = 36 },
-                                                new Material() { MaterialName = "K 35", QuantityNeeded = 2 },
-                                                new Material() { MaterialName = "K 36", QuantityNeeded = 1 }
+                                                new Material() { MaterialName = "K 33", QuantityNeeded = 1, DirectAccess = new string[] { } },
+                                                new Material() { MaterialName = "K 34", QuantityNeeded = 36, DirectAccess = new string[] { } },
+                                                new Material() { MaterialName = "K 35", QuantityNeeded = 2, DirectAccess = new string[] { "4", "5", "6", "7", "8", "9" } },
+                                                new Material() { MaterialName = "K 36", QuantityNeeded = 1, DirectAccess = new string[] { "4", "5", "6" } }
                                             }
                                         },
                                         new Material()
@@ -359,8 +359,8 @@ namespace IBSYS.PPS.Models
                                             QuantityNeeded = 1,
                                             MaterialNeeded = new List<Material>()
                                             {
-                                                new Material() { MaterialName = "K 32", QuantityNeeded = 1 },
-                                                new Material() { MaterialName = "K 39", QuantityNeeded = 1 }
+                                                new Material() { MaterialName = "K 32", QuantityNeeded = 1, DirectAccess = new string[] { "10", "11", "12", "13", "14", "15", "18", "19", "20" } },
+                                                new Material() { MaterialName = "K 39", QuantityNeeded = 1, DirectAccess = new string[] { } }
                                             }
                                         },
                                         new Material()
@@ -369,19 +369,19 @@ namespace IBSYS.PPS.Models
                                             QuantityNeeded = 1,
                                             MaterialNeeded = new List<Material>()
                                             {
-                                                new Material() { MaterialName = "K 24", QuantityNeeded = 2 },
-                                                new Material() { MaterialName = "K 25", QuantityNeeded = 2 },
+                                                new Material() { MaterialName = "K 24", QuantityNeeded = 2, DirectAccess = new string[] { "1", "2", "3", "16", "29", "30", "31", "49", "50", "51", "54", "55", "56" } },
+                                                new Material() { MaterialName = "K 25", QuantityNeeded = 2, DirectAccess = new string[] { "29", "30", "49", "50", "54", "55" } },
                                                 new Material()
                                                 {
                                                     MaterialName = "E 9",
                                                     QuantityNeeded = 1,
                                                     MaterialNeeded = new List<Material>()
                                                     {
-                                                        new Material() { MaterialName = "K 33", QuantityNeeded = 1 },
-                                                        new Material() { MaterialName = "K 34", QuantityNeeded = 36 },
-                                                        new Material() { MaterialName = "K 35", QuantityNeeded = 2 },
-                                                        new Material() { MaterialName = "K 37", QuantityNeeded = 1 },
-                                                        new Material() { MaterialName = "K 38", QuantityNeeded = 1 }
+                                                        new Material() { MaterialName = "K 33", QuantityNeeded = 1, DirectAccess = new string[] { } },
+                                                        new Material() { MaterialName = "K 34", QuantityNeeded = 36, DirectAccess = new string[] { } },
+                                                        new Material() { MaterialName = "K 35", QuantityNeeded = 2, DirectAccess = new string[] { "4", "5", "6", "7", "8", "9" } },
+                                                        new Material() { MaterialName = "K 37", QuantityNeeded = 1, DirectAccess = new string[] { "7", "8", "9" } },
+                                                        new Material() { MaterialName = "K 38", QuantityNeeded = 1, DirectAccess = new string[] { "7", "8", "9" } }
                                                     }
                                                 },
                                                 new Material()
@@ -390,8 +390,8 @@ namespace IBSYS.PPS.Models
                                                     QuantityNeeded = 1,
                                                     MaterialNeeded = new List<Material>()
                                                     {
-                                                        new Material() { MaterialName = "K 32", QuantityNeeded = 1 },
-                                                        new Material() { MaterialName = "K 39", QuantityNeeded = 1 }
+                                                        new Material() { MaterialName = "K 32", QuantityNeeded = 1, DirectAccess = new string[] { "10", "11", "12", "13", "14", "15", "18", "19", "20" } },
+                                                        new Material() { MaterialName = "K 39", QuantityNeeded = 1, DirectAccess = new string[] { } }
                                                     }
                                                 },
                                                 new Material()
@@ -400,9 +400,9 @@ namespace IBSYS.PPS.Models
                                                     QuantityNeeded = 1,
                                                     MaterialNeeded = new List<Material>()
                                                     {
-                                                        new Material() { MaterialName = "K 28", QuantityNeeded = 5 },
-                                                        new Material() { MaterialName = "K 32", QuantityNeeded = 1 },
-                                                        new Material() { MaterialName = "K 59", QuantityNeeded = 2 }
+                                                        new Material() { MaterialName = "K 28", QuantityNeeded = 5, DirectAccess = new string[] { } },
+                                                        new Material() { MaterialName = "K 32", QuantityNeeded = 1, DirectAccess = new string[] { "10", "11", "12", "13", "14", "15", "18", "19", "20" } },
+                                                        new Material() { MaterialName = "K 59", QuantityNeeded = 2, DirectAccess = new string[] { } }
                                                     }
                                                 },
                                             }

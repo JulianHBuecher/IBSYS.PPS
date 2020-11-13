@@ -3,28 +3,28 @@ using System;
 using IBSYS.PPS.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace IBSYS.PPS.Migrations
 {
     [DbContext(typeof(IbsysDatabaseContext))]
-    [Migration("20201110150632_Disposition_Added")]
-    partial class Disposition_Added
+    [Migration("20201113151358_Initial_Create")]
+    partial class Initial_Create
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.1.9")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128)
-                .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                .UseIdentityByDefaultColumns()
+                .HasAnnotation("Relational:MaxIdentifierLength", 63)
+                .HasAnnotation("ProductVersion", "5.0.0");
 
             modelBuilder.Entity("IBSYS.PPS.Models.BillOfMaterial", b =>
                 {
                     b.Property<string>("ProductName")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.HasKey("ProductName");
 
@@ -35,29 +35,29 @@ namespace IBSYS.PPS.Migrations
                 {
                     b.Property<int>("ID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("integer")
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("OrdersInQueueInherit")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("OrdersInQueueOwn")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("PlannedWarehouseFollowing")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Quantity")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("WarehouseStockPassed")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Wip")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("ID");
 
@@ -67,22 +67,22 @@ namespace IBSYS.PPS.Migrations
             modelBuilder.Entity("IBSYS.PPS.Models.Generated.Article", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Amount")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Pct")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Price")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Startamount")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Stockvalue")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -92,19 +92,19 @@ namespace IBSYS.PPS.Migrations
             modelBuilder.Entity("IBSYS.PPS.Models.Generated.Batch", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Amount")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Cost")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Cycletime")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int?>("OrderID")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -117,17 +117,17 @@ namespace IBSYS.PPS.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("integer")
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<string>("P1")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("P2")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("P3")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -138,53 +138,53 @@ namespace IBSYS.PPS.Migrations
                 {
                     b.Property<int?>("OrderID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("integer")
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<string>("Amount")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Article")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Averageunitcosts")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Cost")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Entirecosts")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Id")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Item")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Materialcosts")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Mode")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Ordercosts")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Orderperiod")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Period")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Piececosts")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Quantity")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Time")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("OrderID");
 
@@ -195,48 +195,69 @@ namespace IBSYS.PPS.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("integer")
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<string>("Article")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Penalty")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Price")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Quantity")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.ToTable("SellDirectItems");
                 });
 
+            modelBuilder.Entity("IBSYS.PPS.Models.Input.Workingtime", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .UseIdentityByDefaultColumn();
+
+                    b.Property<string>("Overtime")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Shift")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Station")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Workingtimes");
+                });
+
             modelBuilder.Entity("IBSYS.PPS.Models.LaborAndMachineCosts", b =>
                 {
                     b.Property<int>("Workplace")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<double>("IdleTimeMachineCosts")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double>("LaborCostsFirstShift")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double>("LaborCostsOvertime")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double>("LaborCostsSecondShift")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double>("LaborCostsThirdShift")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double>("ProductiveMachineCosts")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.HasKey("Workplace");
 
@@ -247,19 +268,22 @@ namespace IBSYS.PPS.Migrations
                 {
                     b.Property<Guid>("ID")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.Property<string>("BillOfMaterialProductName")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
+
+                    b.Property<string>("DirectAccess")
+                        .HasColumnType("text");
 
                     b.Property<string>("MaterialName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<Guid?>("ParentMaterialId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uuid");
 
                     b.Property<int>("QuantityNeeded")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("ID");
 
@@ -274,17 +298,17 @@ namespace IBSYS.PPS.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("integer")
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<int>("OrderModus")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("OrderQuantity")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("PartName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -295,11 +319,11 @@ namespace IBSYS.PPS.Migrations
                 {
                     b.Property<int>("MissingPartId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("integer")
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<string>("Id")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("MissingPartId");
 
@@ -310,14 +334,14 @@ namespace IBSYS.PPS.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("integer")
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<int>("Amount")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Part")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -328,40 +352,58 @@ namespace IBSYS.PPS.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("integer")
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<string>("Bicycle")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Orders")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
                     b.ToTable("ProductionOrders");
                 });
 
+            modelBuilder.Entity("IBSYS.PPS.Models.SetupEvents", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .UseIdentityByDefaultColumn();
+
+                    b.Property<int>("NumberOfSetupEvents")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("WorkplaceId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SetupEvents");
+                });
+
             modelBuilder.Entity("IBSYS.PPS.Models.Stock", b =>
                 {
                     b.Property<string>("ItemNumber")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Discriminator")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<double>("ItemValue")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<int>("QuantityInStock")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Usage")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("ItemNumber");
 
@@ -374,29 +416,29 @@ namespace IBSYS.PPS.Migrations
                 {
                     b.Property<int>("WaitinglistForOrdersInWorkId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("integer")
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<int>("Amount")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("Batch")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Id")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Item")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Order")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Period")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("TimeNeed")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("WaitinglistForOrdersInWorkId");
 
@@ -407,17 +449,17 @@ namespace IBSYS.PPS.Migrations
                 {
                     b.Property<int>("WaitinglistForStockId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("integer")
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<int?>("MissingPartInStockMissingPartId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("TimeNeed")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("WorkplaceId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("WaitinglistForStockId");
 
@@ -430,29 +472,29 @@ namespace IBSYS.PPS.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("integer")
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<int>("Amount")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("Batch")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Item")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Order")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Period")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("TimeNeed")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("WaitinglistForWorkstationsId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -465,29 +507,29 @@ namespace IBSYS.PPS.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("integer")
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<int>("Amount")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int>("Batch")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Item")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Order")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<string>("Period")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.Property<int>("TimeNeed")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<int?>("WaitinglistForStockId")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -500,14 +542,14 @@ namespace IBSYS.PPS.Migrations
                 {
                     b.Property<int>("WaitinglistForWorkstationsId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("integer")
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<int>("TimeNeed")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<string>("WorkplaceId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("text");
 
                     b.HasKey("WaitinglistForWorkstationsId");
 
@@ -519,16 +561,16 @@ namespace IBSYS.PPS.Migrations
                     b.HasBaseType("IBSYS.PPS.Models.Stock");
 
                     b.Property<double>("Deviation")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<int>("DiscountQuantity")
-                        .HasColumnType("int");
+                        .HasColumnType("integer");
 
                     b.Property<double>("OrderCosts")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.Property<double>("ProcureLeadTime")
-                        .HasColumnType("float");
+                        .HasColumnType("double precision");
 
                     b.HasDiscriminator().HasValue("PurchasedItems");
                 });
@@ -556,6 +598,8 @@ namespace IBSYS.PPS.Migrations
                     b.HasOne("IBSYS.PPS.Models.Material", "ParentMaterial")
                         .WithMany("MaterialNeeded")
                         .HasForeignKey("ParentMaterialId");
+
+                    b.Navigation("ParentMaterial");
                 });
 
             modelBuilder.Entity("IBSYS.PPS.Models.WaitinglistForStock", b =>
@@ -563,6 +607,8 @@ namespace IBSYS.PPS.Migrations
                     b.HasOne("IBSYS.PPS.Models.MissingPartInStock", "MissingPartInStock")
                         .WithMany("WaitinglistForStock")
                         .HasForeignKey("MissingPartInStockMissingPartId");
+
+                    b.Navigation("MissingPartInStock");
                 });
 
             modelBuilder.Entity("IBSYS.PPS.Models.WaitinglistForWorkplace", b =>
@@ -570,6 +616,8 @@ namespace IBSYS.PPS.Migrations
                     b.HasOne("IBSYS.PPS.Models.WaitinglistForWorkstations", "WaitinglistForWorkstations")
                         .WithMany("WaitingListForWorkplace")
                         .HasForeignKey("WaitinglistForWorkstationsId");
+
+                    b.Navigation("WaitinglistForWorkstations");
                 });
 
             modelBuilder.Entity("IBSYS.PPS.Models.WaitinglistForWorkplaceStock", b =>
@@ -577,6 +625,38 @@ namespace IBSYS.PPS.Migrations
                     b.HasOne("IBSYS.PPS.Models.WaitinglistForStock", "WaitinglistForStock")
                         .WithMany("WaitinglistForWorkplaceStock")
                         .HasForeignKey("WaitinglistForStockId");
+
+                    b.Navigation("WaitinglistForStock");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.BillOfMaterial", b =>
+                {
+                    b.Navigation("RequiredMaterials");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.Generated.Order", b =>
+                {
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.Material", b =>
+                {
+                    b.Navigation("MaterialNeeded");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.MissingPartInStock", b =>
+                {
+                    b.Navigation("WaitinglistForStock");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.WaitinglistForStock", b =>
+                {
+                    b.Navigation("WaitinglistForWorkplaceStock");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.WaitinglistForWorkstations", b =>
+                {
+                    b.Navigation("WaitingListForWorkplace");
                 });
 #pragma warning restore 612, 618
         }

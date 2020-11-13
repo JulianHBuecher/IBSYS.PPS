@@ -10,10 +10,10 @@ namespace IBSYS.PPS.Models
     public class Material
     {
         [Key]
-        //[DatabaseGenerated(DatabaseGeneratedOption.None)]
         public Guid ID { get; set; }
         public string MaterialName { get; set; }
         public int QuantityNeeded { get; set; }
+        public string[] DirectAccess { get; set; }
         public List<Material> MaterialNeeded { get; set; }
         [JsonIgnore]
         [XmlIgnore]

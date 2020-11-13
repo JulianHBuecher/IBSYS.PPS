@@ -15,9 +15,9 @@ namespace IBSYS.PPS.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn)
-                .HasAnnotation("ProductVersion", "3.1.10")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+                .UseIdentityByDefaultColumns()
+                .HasAnnotation("Relational:MaxIdentifierLength", 63)
+                .HasAnnotation("ProductVersion", "5.0.0");
 
             modelBuilder.Entity("IBSYS.PPS.Models.BillOfMaterial", b =>
                 {
@@ -34,7 +34,7 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int>("ID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<string>("Name")
                         .HasColumnType("text");
@@ -116,7 +116,7 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<string>("P1")
                         .HasColumnType("text");
@@ -137,7 +137,7 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int?>("OrderID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<string>("Amount")
                         .HasColumnType("text");
@@ -194,7 +194,7 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<string>("Article")
                         .HasColumnType("text");
@@ -218,7 +218,7 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<string>("Overtime")
                         .HasColumnType("text");
@@ -271,6 +271,9 @@ namespace IBSYS.PPS.Migrations
                     b.Property<string>("BillOfMaterialProductName")
                         .HasColumnType("text");
 
+                    b.Property<string>("DirectAccess")
+                        .HasColumnType("text");
+
                     b.Property<string>("MaterialName")
                         .HasColumnType("text");
 
@@ -294,7 +297,7 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<int>("OrderModus")
                         .HasColumnType("integer");
@@ -315,7 +318,7 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int>("MissingPartId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<string>("Id")
                         .HasColumnType("text");
@@ -330,7 +333,7 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<int>("Amount")
                         .HasColumnType("integer");
@@ -348,7 +351,7 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<string>("Bicycle")
                         .HasColumnType("text");
@@ -366,7 +369,7 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<int>("NumberOfSetupEvents")
                         .HasColumnType("integer");
@@ -412,7 +415,7 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int>("WaitinglistForOrdersInWorkId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<int>("Amount")
                         .HasColumnType("integer");
@@ -445,7 +448,7 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int>("WaitinglistForStockId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<int?>("MissingPartInStockMissingPartId")
                         .HasColumnType("integer");
@@ -468,7 +471,7 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<int>("Amount")
                         .HasColumnType("integer");
@@ -503,7 +506,7 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<int>("Amount")
                         .HasColumnType("integer");
@@ -538,7 +541,7 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int>("WaitinglistForWorkstationsId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+                        .UseIdentityByDefaultColumn();
 
                     b.Property<int>("TimeNeed")
                         .HasColumnType("integer");
@@ -593,6 +596,8 @@ namespace IBSYS.PPS.Migrations
                     b.HasOne("IBSYS.PPS.Models.Material", "ParentMaterial")
                         .WithMany("MaterialNeeded")
                         .HasForeignKey("ParentMaterialId");
+
+                    b.Navigation("ParentMaterial");
                 });
 
             modelBuilder.Entity("IBSYS.PPS.Models.WaitinglistForStock", b =>
@@ -600,6 +605,8 @@ namespace IBSYS.PPS.Migrations
                     b.HasOne("IBSYS.PPS.Models.MissingPartInStock", "MissingPartInStock")
                         .WithMany("WaitinglistForStock")
                         .HasForeignKey("MissingPartInStockMissingPartId");
+
+                    b.Navigation("MissingPartInStock");
                 });
 
             modelBuilder.Entity("IBSYS.PPS.Models.WaitinglistForWorkplace", b =>
@@ -607,6 +614,8 @@ namespace IBSYS.PPS.Migrations
                     b.HasOne("IBSYS.PPS.Models.WaitinglistForWorkstations", "WaitinglistForWorkstations")
                         .WithMany("WaitingListForWorkplace")
                         .HasForeignKey("WaitinglistForWorkstationsId");
+
+                    b.Navigation("WaitinglistForWorkstations");
                 });
 
             modelBuilder.Entity("IBSYS.PPS.Models.WaitinglistForWorkplaceStock", b =>
@@ -614,6 +623,38 @@ namespace IBSYS.PPS.Migrations
                     b.HasOne("IBSYS.PPS.Models.WaitinglistForStock", "WaitinglistForStock")
                         .WithMany("WaitinglistForWorkplaceStock")
                         .HasForeignKey("WaitinglistForStockId");
+
+                    b.Navigation("WaitinglistForStock");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.BillOfMaterial", b =>
+                {
+                    b.Navigation("RequiredMaterials");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.Generated.Order", b =>
+                {
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.Material", b =>
+                {
+                    b.Navigation("MaterialNeeded");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.MissingPartInStock", b =>
+                {
+                    b.Navigation("WaitinglistForStock");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.WaitinglistForStock", b =>
+                {
+                    b.Navigation("WaitinglistForWorkplaceStock");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.WaitinglistForWorkstations", b =>
+                {
+                    b.Navigation("WaitingListForWorkplace");
                 });
 #pragma warning restore 612, 618
         }

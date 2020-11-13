@@ -17,5 +17,8 @@ namespace IBSYS.PPS.Models.Materialplanning
         // Status 4 - Eil-Bestellung
         // Status 5 - Normal-Bestellung
         public int OrderModus { get; set; }
+        // Entity with Amount of Parts from Queue
+        [JsonProperty("Required Parts out of Queue")]
+        public int AdditionalParts { get; set; }
     }
 }

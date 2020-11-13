@@ -70,7 +70,7 @@ namespace IBSYS.PPS.Controllers
 
             var counter = 0;
 
-            foreach (var bicycle in new List<BillOfMaterial> { p1, p2, p3})
+            foreach (var bicycle in new List<BillOfMaterial> { p1, p2, p3 })
             {
                 bicycle.ProductName = bicycleParts[counter].ProductName;
                 bicycle.RequiredMaterials = bicycleParts[counter].RequiredMaterials;
@@ -116,15 +116,15 @@ namespace IBSYS.PPS.Controllers
 
             var calculatedNewParts = neededMaterialMatrix.Multiply(productionOrderMatrix);
 
-            var n = calculatedNewParts.ToMatrixString();
-
             try
             {
-                var orders = await PlaceOrder(calculatedNewParts, completedPartsForP1);
+                var orders = await PlaceOrder(calculatedNewParts, completedPartsForP1, p1, p2, p3);
+
+                var n = orders.Capacity;
 
                 return Ok(orders
                     .Where(o => (o.OrderModus != 0 && Convert.ToInt32(o.OrderQuantity) != 0))
-                    .Select(o => o));
+                    .Select(o => o).ToList());
             }
             catch (Exception ex)
             {
@@ -189,7 +189,7 @@ namespace IBSYS.PPS.Controllers
 
             return m.MaterialNeeded;
         }
-        
+
         [NonAction]
         public async Task<List<Material>> FilterNestedMaterialsByName(string parts, Material ml)
         {
@@ -197,7 +197,7 @@ namespace IBSYS.PPS.Controllers
 
             if (ml.MaterialName.StartsWith(parts))
             {
-                partsForBicycle.Add(new Material { MaterialName = ml.MaterialName, QuantityNeeded = ml.QuantityNeeded });
+                partsForBicycle.Add(new Material { MaterialName = ml.MaterialName, QuantityNeeded = ml.QuantityNeeded, DirectAccess = ml.DirectAccess });
                 if (ml.MaterialName.StartsWith("E") && ml.MaterialNeeded.Count != 0)
                 {
                     foreach (var material in ml.MaterialNeeded)
@@ -221,13 +221,59 @@ namespace IBSYS.PPS.Controllers
         }
 
         [NonAction]
+        public async Task<List<Material>> FilterKMaterialsByNameAndEPart(string parts, string ePart, Material ml)
+        {
+            var partsForBicycle = new List<Material>();
+            if (!ePart.StartsWith("P"))
+            {
+                if (ml.MaterialName.StartsWith("E") && ml.MaterialNeeded != null && ml.MaterialNeeded.Count != 0)
+                {
+                    if (ml.MaterialName.Equals(ePart))
+                    {
+                        partsForBicycle.AddRange(await FilterNestedMaterialsByName(parts, ml));
+                    }
+                    else
+                    {
+                        foreach (var material in ml.MaterialNeeded)
+                        {
+                            if (ml.MaterialName.Equals(ePart))
+                            {
+                                partsForBicycle.AddRange(await FilterNestedMaterialsByName(parts, ml));
+                            }
+                            partsForBicycle.AddRange(await FilterKMaterialsByNameAndEPart(parts, ePart, material));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (ml.MaterialName.StartsWith("E") && ml.MaterialNeeded.Count != 0)
+                {
+                    foreach (var material in ml.MaterialNeeded)
+                    {
+                        partsForBicycle.AddRange(await FilterKMaterialsByNameAndEPart(parts, ePart, material));
+                    }
+                }
+                else
+                {
+                    partsForBicycle.AddRange(await FilterNestedMaterialsByName(parts, ml));
+                }
+            }
+
+
+            return partsForBicycle.Where(p => p.DirectAccess.Contains(ePart.Split(" ")[1])).Select(p => p).ToList();
+            //return partsForBicycle;
+        }
+
+        [NonAction]
         public List<Material> SumFilteredMaterials(List<Material> materials)
         {
             var partsOrderedAndSummed = materials.GroupBy(p => p.MaterialName).OrderBy(p => p.Key)
                 .Select(p => new Material
                 {
                     MaterialName = p.Key,
-                    QuantityNeeded = p.Select(pp => pp.QuantityNeeded).Sum()
+                    QuantityNeeded = p.Select(pp => pp.QuantityNeeded).Sum(),
+                    DirectAccess = p.Select(pp => pp.DirectAccess).First()
                 })
                 .ToList();
 
@@ -248,7 +294,8 @@ namespace IBSYS.PPS.Controllers
                     listForInsert.Insert(i, new Material
                     {
                         MaterialName = referenceListTwo[i].MaterialName,
-                        QuantityNeeded = 0
+                        QuantityNeeded = 0,
+                        DirectAccess = referenceListTwo[i].DirectAccess
                     });
                 }
                 if (listForInsert[i].MaterialName != referenceListThree[i].MaterialName &&
@@ -257,7 +304,8 @@ namespace IBSYS.PPS.Controllers
                     listForInsert.Insert(i, new Material
                     {
                         MaterialName = referenceListThree[i].MaterialName,
-                        QuantityNeeded = 0
+                        QuantityNeeded = 0,
+                        DirectAccess = referenceListThree[i].DirectAccess
                     });
                 }
             }
@@ -265,34 +313,7 @@ namespace IBSYS.PPS.Controllers
         }
 
         [NonAction]
-        public async Task<List<Material>> FilterKMaterialsByNameAndEPart(string parts, string ePart, Material ml)
-        {
-            var partsForBicycle = new List<Material>();
-
-            if (ml.MaterialName.StartsWith("E") && ml.MaterialNeeded.Count != 0)
-            {
-                if (ml.MaterialName.Equals(ePart))
-                {
-                    partsForBicycle.AddRange(await FilterNestedMaterialsByName(parts, ml));
-                }
-                else
-                {
-                    foreach (var material in ml.MaterialNeeded)
-                    {
-                        if (ml.MaterialName.Equals(ePart))
-                        {
-                            partsForBicycle.AddRange(await FilterNestedMaterialsByName(parts, ml));
-                        }
-                        partsForBicycle.AddRange(await FilterKMaterialsByNameAndEPart(parts, ePart, material));
-                    }
-                }
-            }
-
-            return partsForBicycle;
-        }
-
-        [NonAction]
-        public async Task<List<OrderForK>> PlaceOrder(Matrix<Double> requiredParts, List<Material> partsForPlanning)
+        public async Task<List<OrderForK>> PlaceOrder(Matrix<Double> requiredParts, List<Material> partsForPlanning, BillOfMaterial bicycleOne, BillOfMaterial bicycleTwo, BillOfMaterial bicycleThree)
         {
             var orderPlacements = new List<OrderForK>();
             var position = 0;
@@ -306,11 +327,15 @@ namespace IBSYS.PPS.Controllers
                     .Where(m => m.Id.Equals(partNumber))
                     .Select(m => m.Amount).FirstOrDefaultAsync();
 
+                if (partNumber.Equals("24"))
+                {
+                }
+
                 var warehouseStock = Convert.ToInt32(stockQuantity);
 
                 var waitinglistWorkstations = await _db.WaitinglistWorkstations.AsNoTracking()
                     .Include(m => m.WaitingListForWorkplace)
-                    .Select(w => w.WaitingListForWorkplace.Where(wl => wl.Item.Equals(partNumber)))
+                    .Select(w => w.WaitingListForWorkplace.Where(wl => part.DirectAccess.Contains(wl.Item)))
                     .SelectMany(wl => wl)
                     .ToListAsync();
 
@@ -318,31 +343,36 @@ namespace IBSYS.PPS.Controllers
                     .Include(w => w.WaitinglistForStock).ThenInclude(w => w.WaitinglistForWorkplaceStock)
                     .Select(w => w.WaitinglistForStock
                         .Select(ws => ws.WaitinglistForWorkplaceStock
-                        .Where(wss => wss.Item.Equals(partNumber)).ToList()))
+                        .Where(wss => part.DirectAccess.Contains(wss.Item)).ToList()))
                     .FirstOrDefaultAsync();
 
-                var ordersInWaitingQueue = 0;
+                var missingParts = waitinglistMissingParts.SelectMany(p => p.Select(pp => pp)).ToList();
 
-                // Filter list for the same batches
-                int? wlwCounter = waitinglistWorkstations
-                    .GroupBy(w => w.Batch)
-                    .Select(wp => wp.OrderBy(wp => wp.Batch).First().Amount).Sum();
+                var requiredPartsFromWaitingQueue = 0;
 
-                int? wlmCounter = waitinglistMissingParts == null ? 0 :
-                    waitinglistMissingParts.Select(mp => mp.GroupBy(w => w.Batch)
-                        .Select(wmp => wmp.OrderBy(wp => wp.Batch).First().Amount).Sum()).Sum();
+                // Get additional required K parts resulting from queue
+                //waitinglistWorkstations.ForEach(async wlw =>
+                //{
+                //    requiredPartsFromWaitingQueue += await ExtractAdditionalKParts(wlw.Item, wlw.Amount, part.MaterialName, bicycleOne, bicycleTwo, bicycleThree);
+                //});
 
-                // Check for no Items in lists
-                wlwCounter ??= 0;
-                wlmCounter ??= 0;
+                for (var i = 0; i < waitinglistWorkstations.Count(); i++)
+                {
+                    requiredPartsFromWaitingQueue += await ExtractAdditionalKParts(waitinglistWorkstations[i].Item, waitinglistWorkstations[i].Amount, part.MaterialName, bicycleOne, bicycleTwo, bicycleThree);
+                }
 
-                ordersInWaitingQueue += wlwCounter.Value + wlmCounter.Value;
+                //missingParts.ForEach(async mp =>
+                //{
+                //    requiredPartsFromWaitingQueue += await ExtractAdditionalKParts(mp.Item, mp.Amount, part.MaterialName, bicycleOne, bicycleTwo, bicycleThree);
+                //});
 
-                // TODO: Get additional required K parts resulting from queue
-                //var additionalParts = ExtractAdditionalKParts(part, ordersInWaitingQueue);
+                for (var i = 0; i < missingParts.Count(); i++)
+                {
+                    requiredPartsFromWaitingQueue += await ExtractAdditionalKParts(missingParts[i].Item, missingParts[i].Amount, part.MaterialName, bicycleOne, bicycleTwo, bicycleThree);
+                }
 
                 // Logik for Decision between E or N orders and how much
-                var orderPlacement = await SetOrderTypeAndQuantity(part, stockQuantity, requiredParts.Row(position));
+                var orderPlacement = await SetOrderTypeAndQuantity(part, stockQuantity, requiredParts.Row(position), requiredPartsFromWaitingQueue);
                 orderPlacements.Add(orderPlacement);
 
                 // Set Counter One Up
@@ -352,72 +382,63 @@ namespace IBSYS.PPS.Controllers
         }
         
         [NonAction]
-        public async Task<List<Material>> ExtractAdditionalKParts(Material material, int orderInQueue)
+        public async Task<int> ExtractAdditionalKParts(string ePart, int amount, string kPart, BillOfMaterial bicycleOne, BillOfMaterial bicycleTwo, BillOfMaterial bicycleThree)
         {
+            if (Convert.ToInt32(ePart) <= 3)
+            {
+                ePart = $"P {ePart}";
+            }
+            else
+            {
+                ePart = $"E {ePart}";
+            }
+
             var isPartOf = await _db.SelfProductionItems
                 .AsNoTracking()
-                .Where(sp => sp.ItemNumber.Equals(material.MaterialName))
+                .Where(sp => sp.ItemNumber.Equals(ePart))
                 .Select(sp => sp)
                 .FirstOrDefaultAsync();
 
-            var bicycleNumber = "";
+            var bicycle = new BillOfMaterial();
 
-            switch (isPartOf.Usage)
+            if (isPartOf.Usage != null)
             {
-                case "K":
-                    bicycleNumber = "P1";
-                    break;
-                case "D":
-                    bicycleNumber = "P2";
-                    break;
-                case "H":
-                    bicycleNumber = "P3";
-                    break;
-                default:
-                    bicycleNumber = "P1";
-                    break;
+                bicycle = isPartOf.Usage switch
+                {
+                    "K" => bicycleOne,
+                    "D" => bicycleTwo,
+                    "H" => bicycleThree,
+                    _ => bicycleOne
+                };
             }
-
-            // Extract bicycle per number for filtering the needed materials
-            var bicycleParts = await _db.BillOfMaterials
-                .AsNoTracking()
-                .Include(b => b.RequiredMaterials)
-                .Select(b => b)
-                .FirstOrDefaultAsync(b => b.ProductName.Equals(bicycleNumber));
+            else
+            {
+                bicycle = isPartOf.ItemNumber switch
+                {
+                    "P 1" => bicycleOne,
+                    "P 2" => bicycleTwo,
+                    "P 3" => bicycleThree,
+                    _ => bicycleOne
+                };
+            }
 
             var partsOutOfQueue = new List<Material>();
 
-            bicycleParts.RequiredMaterials.ForEach(async b =>
+            bicycle.RequiredMaterials.ForEach(async b =>
             {
-                var parts = await FilterKMaterialsByNameAndEPart("K", material.MaterialName, b);
+                var parts = await FilterKMaterialsByNameAndEPart("K", ePart, b);
                 partsOutOfQueue.AddRange(parts);
             });
 
             var summedParts = SumFilteredMaterials(partsOutOfQueue);
 
-            var ePartsVec = Vector<Double>.Build.DenseOfEnumerable(summedParts.Select(e => Convert.ToDouble(e.QuantityNeeded)));
+            var additionalAmount = summedParts.Where(s => s.MaterialName.Equals(kPart)).Select(s => s.QuantityNeeded).First();
 
-            if (orderInQueue == 0)
-            {
-                for (var i = 0; i < partsOutOfQueue.Count(); i++)
-                {
-                    partsOutOfQueue[i].QuantityNeeded = (int)ePartsVec[i];
-                }
-                return partsOutOfQueue;
-            }
-            else
-            {
-                var additionalPartsNeeded = ePartsVec.Multiply(orderInQueue);
-                for (var i = 0; i < partsOutOfQueue.Count(); i++)
-                {
-                    partsOutOfQueue[i].QuantityNeeded = (int)additionalPartsNeeded[i];
-                }
-                return partsOutOfQueue;
-            }
+            return additionalAmount *= amount;
         }
         
         [NonAction]
-        public async Task<OrderForK> SetOrderTypeAndQuantity(Material material, string stockQuantity, Vector<Double> accordingRequirements)
+        public async Task<OrderForK> SetOrderTypeAndQuantity(Material material, string stockQuantity, Vector<Double> accordingRequirements, int partsFromQueue)
         {
             var kPart = await _db.PurchasedItems
                 .AsNoTracking()
@@ -438,7 +459,7 @@ namespace IBSYS.PPS.Controllers
 
             var discountQuantity = kPart.DiscountQuantity;
 
-            var stock = Convert.ToInt32(stockQuantity);
+            var stock = Convert.ToInt32(stockQuantity) - partsFromQueue;
 
             var maxDeliveryDuration = deliveryDuration + deviation;
             var daysUntilNextDelivery = Math.Ceiling(maxDeliveryDuration * 5);
@@ -471,7 +492,8 @@ namespace IBSYS.PPS.Controllers
             {
                 PartName = kPart.ItemNumber,
                 OrderQuantity = orderAmount.ToString(),
-                OrderModus = orderType
+                OrderModus = orderType,
+                AdditionalParts = partsFromQueue
             };
         }
         
