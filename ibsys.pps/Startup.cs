@@ -24,6 +24,18 @@ namespace IBSYS.PPS
         {
             // services.AddControllersWithViews();
 
+            services.AddCors(options =>
+            {
+                options.AddPolicy(name: "CorsPolicy",
+                                  builder =>
+                                  {
+                                      builder
+                                        .AllowAnyOrigin()
+                                        .AllowAnyMethod()
+                                        .AllowAnyHeader();
+                                  });
+            });
+
             services.AddControllers(options => 
             { 
                 options.RespectBrowserAcceptHeader = true;
@@ -47,6 +59,8 @@ namespace IBSYS.PPS
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -64,13 +78,17 @@ namespace IBSYS.PPS
 
             app.UseRouting();
 
+            app.UseCors("CorsPolicy");
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller}/{action=Index}/{id?}");
+                    pattern: "{controller}/{action=Index}/{id?}")
+                .RequireCors("CorsPolicy");
             });
 
+            
             //app.UseSpa(spa =>
             //{
             //    spa.Options.SourcePath = "ClientApp";
