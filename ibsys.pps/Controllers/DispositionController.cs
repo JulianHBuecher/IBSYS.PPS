@@ -1,18 +1,18 @@
-﻿using System;
+﻿using IBSYS.PPS.Models;
+using IBSYS.PPS.Models.Capacity;
+using IBSYS.PPS.Models.Disposition;
+using IBSYS.PPS.Models.Input;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using IBSYS.PPS.Models;
-using IBSYS.PPS.Models.Disposition;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
-using IBSYS.PPS.Models.Capacity;
 
 namespace IBSYS.PPS.Controllers
 {
@@ -47,18 +47,29 @@ namespace IBSYS.PPS.Controllers
                 }
             }
 
-            var productionOrder = await _db.ProductionOrders
+            var productionOrders = await _db.ProductionOrders
                 .AsNoTracking()
                 .Where(po => po.Bicycle.Equals(bicycle))
                 .Select(po => po.Orders)
                 .SingleOrDefaultAsync();
 
-            var disposition = await ExecuteDisposition(bicycle, Convert.ToInt32(productionOrder[0]), plannedStocks);
+            var directSalesOrder = await _db.SellDirectItems
+                .AsNoTracking()
+                .Where(ds => ds.Article.Equals(Regex.Match(bicycle, @"\d+").Value))
+                .Select(ds => ds.Quantity)
+                .SingleOrDefaultAsync();
+
+            directSalesOrder ??= "0";
+
+            var disposition = await ExecuteDisposition(bicycle,
+                productionOrders,
+                (Convert.ToInt32(productionOrders[0]) + Convert.ToInt32(directSalesOrder)), 
+                plannedStocks);
 
             return Ok(disposition);
         }
 
-        [HttpPost("syncresult")]
+        [HttpPost("syncresult/disposition")]
         public async Task<ActionResult> PostResultForPersistence()
         {
             var productionOrders = new List<BicyclePart>();
@@ -91,8 +102,85 @@ namespace IBSYS.PPS.Controllers
             }
         }
 
+        [HttpPost("syncresult/capacityplanning")]
+        public async Task<ActionResult> PostCapacityResultForPersistence()
+        {
+            var workingTimes = new List<Workingtime>();
+
+            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
+            {
+                var body = await reader.ReadToEndAsync();
+                if (body.Length != 0)
+                {
+                    JObject o = JObject.Parse(body);
+                    JArray a = (JArray)o["CapacityPlanningResult"];
+                    workingTimes = a.ToObject<List<Workingtime>>();
+                }
+            }
+
+            try
+            {
+                if (workingTimes != null)
+                {
+                    workingTimes.ForEach(w =>
+                    {
+                        if ((w.Shift.Equals("1") || w.Shift.Equals("2")) && Convert.ToInt32(w.Overtime) > 1200)
+                        {
+                            throw new Exception("Overtime have to be lesser than 1200!");
+                        }
+                        if (w.Shift.Equals("3") && Convert.ToInt32(w.Overtime) > 0)
+                        {
+                            throw new Exception("In third shift you could not set overtime!");
+                        }
+                        if (Convert.ToInt32(w.Overtime) < 0)
+                        {
+                            throw new Exception("Overtime could not be negative!");
+                        }
+                    });
+
+                    await _db.AddRangeAsync(workingTimes);
+                }
+
+                await _db.SaveChangesAsync();
+
+                return Ok("Data sucessfully inserted");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Something went wrong, {ex.Message}");
+            }
+        }
+
+        [HttpPost("capacity")]
+        public async Task<ActionResult> GetCapacityRequirements()
+        {
+            var productionOrders = await _db.ProductionOrders
+                .AsNoTracking()
+                .Select(po => po)
+                .ToListAsync();
+
+            var plannedStocks = new Dictionary<String, List<PlannedWarehouseStock>>();
+
+            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
+            {
+                var body = await reader.ReadToEndAsync();
+                if (body.Length != 0)
+                {
+                    JObject o = JObject.Parse(body);
+                    foreach (string id in new string[] { "p1", "p2", "p3" })
+                    {
+                        JArray a = (JArray)o[id]["PlannedStocks"];
+                        var plannedStock = a.ToObject<List<PlannedWarehouseStock>>();
+                        plannedStocks.Add(id, plannedStock);
+                    }
+                }
+            }
+            var capRequirements = await ExecuteCapacityRequirements(productionOrders, productionOrders, plannedStocks);
+            return Ok(capRequirements);
+        }
+
         [NonAction]
-        public async Task<Bicycle> ExecuteDisposition(string id, int salesOrders, List<PlannedWarehouseStock> plannedWarehouseStock)
+        public async Task<Bicycle> ExecuteDisposition(string id, double[] forecasts, int salesOrders, List<PlannedWarehouseStock> plannedWarehouseStock)
         {
             #region Bicycle Data
             string[][] p1 = new string[][]
@@ -125,19 +213,12 @@ namespace IBSYS.PPS.Controllers
 
             string[][] partsForDisposition = new string[][] { };
 
-            switch (id.ToLower())
+            partsForDisposition = (id.ToLower()) switch
             {
-                case "p1":
-                    partsForDisposition = p1;
-                    break;
-                case "p2":
-                    partsForDisposition = p2;
-                    break;
-                default:
-                    partsForDisposition = p3;
-                    break;
-            }
-
+                "p1" => p1,
+                "p2" => p2,
+                _ => p3,
+            };
             var disposition = new List<BicyclePart>();
 
             for (var i = 0; i < partsForDisposition.Length; i++)
@@ -145,7 +226,7 @@ namespace IBSYS.PPS.Controllers
                 var parts = new List<BicyclePart>();
                 if (!disposition.Any())
                 {
-                    parts = await CalculateParts(partsForDisposition[i].Select(a => a.ToString()).ToList(), salesOrders, 0, plannedWarehouseStock);
+                    parts = await CalculateParts(partsForDisposition[i].Select(a => a.ToString()).ToList(), salesOrders, forecasts, 0, plannedWarehouseStock);
                     disposition.AddRange(parts);
                 }
                 else
@@ -154,6 +235,7 @@ namespace IBSYS.PPS.Controllers
                     parts = await CalculateParts(
                         partsForDisposition[i].Select(a => a.ToString()).ToList(),
                         Convert.ToInt32(queueFromPrevious.Quantity),
+                        forecasts,
                         Convert.ToInt32(queueFromPrevious.OrdersInQueueOwn),
                         plannedWarehouseStock);
                     disposition.AddRange(parts);
@@ -165,7 +247,7 @@ namespace IBSYS.PPS.Controllers
 
         [NonAction]
         public async Task<List<BicyclePart>> CalculateParts(List<string> partsForDisposition,
-            int salesOrders, int ordersInQueueFromPrevious, List<PlannedWarehouseStock> plannedWarehouseStock)
+            int salesOrders, double[] forecasts, int ordersInQueueFromPrevious, List<PlannedWarehouseStock> plannedWarehouseStock)
         {
             var requiredMaterials = new List<BicyclePart>();
 
@@ -232,7 +314,16 @@ namespace IBSYS.PPS.Controllers
 
                 if (!plannedWarehouseStock.Any())
                 {
-                    plannedStock = Convert.ToInt32(stockQuantity);
+                    // Calculate new SafetyStock if nothing comes from user input
+                    plannedStock = (int)Math.Round((Math.Ceiling(forecasts.Sum() / 4) - warehouseStock) / 10) * 10;
+                    if (plannedStock > warehouseStock || plannedStock < 0)
+                    {
+                        plannedStock = (int)Math.Round((decimal)warehouseStock / 10) * 10;
+                    }
+                    if (plannedStock == 0)
+                    {
+                        plannedStock = (int)Math.Round(Math.Ceiling(forecasts.Sum() / 4) / 10) * 10; 
+                    }
                 }
                 else
                 {
@@ -256,30 +347,8 @@ namespace IBSYS.PPS.Controllers
             return requiredMaterials;
         }
 
-        [HttpPost("capacity")]
-        public async Task<ActionResult> GetCapacityRequirements()
-        {
-            var plannedStocks = new Dictionary<String, List<PlannedWarehouseStock>>();
-
-            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
-            {
-                var body = await reader.ReadToEndAsync();
-                if (body.Length != 0)
-                {
-                    JObject o = JObject.Parse(body);
-                    foreach (string id in new string[] { "p1", "p2", "p3" })
-                    {
-                        JArray a = (JArray)o[id]["PlannedStocks"];
-                        var plannedStock = a.ToObject<List<PlannedWarehouseStock>>();
-                        plannedStocks.Add(id, plannedStock);
-                    }
-                }
-            }
-            var capRequirements = await ExecuteCapacityRequirements(100, plannedStocks);
-            return Ok(capRequirements);
-        }
-
-        public async Task<Dictionary<int, int>> ExecuteCapacityRequirements(int salesOrders, Dictionary<String, List<PlannedWarehouseStock>> plannedWarehouseStocks)
+        [NonAction]
+        public async Task<Dictionary<int, int>> ExecuteCapacityRequirements(List<ProductionOrder> salesOrders, List<ProductionOrder> forecasts, Dictionary<String, List<PlannedWarehouseStock>> plannedWarehouseStocks)
         {
             #region Capacity Data
             Dictionary<String, List<CapacityRequirement>> capData = new Dictionary<String, List<CapacityRequirement>>();
@@ -319,7 +388,11 @@ namespace IBSYS.PPS.Controllers
             var setupTimes = new Dictionary<int, int>();
             foreach (KeyValuePair<String, List<PlannedWarehouseStock>> pair in plannedWarehouseStocks)
             {
-                var dispositionData = ExecuteDisposition(pair.Key, 100, pair.Value);
+                var dispositionData = ExecuteDisposition(pair.Key,
+                    forecasts.Where(f => f.Bicycle.Equals(pair.Key.ToUpper())).Select(f => f.Orders).First(),
+                    (int)salesOrders.Where(s => s.Bicycle.Equals(pair.Key.ToUpper())).Select(s => s.Orders[0]).First(), 
+                    pair.Value);
+
                 foreach (BicyclePart part in dispositionData.Result.Parts)
                 {
                     var capacityData = capData[part.Name];

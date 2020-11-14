@@ -44,9 +44,9 @@ namespace IBSYS.PPS
                 .AddXmlSerializerFormatters()
                 .AddNewtonsoftJson(x => x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
 
-            services.AddDbContext<IbsysDatabaseContext>(options =>
+            services.AddEntityFrameworkNpgsql().AddDbContext<IbsysDatabaseContext>(options =>
             {
-                options.UseSqlServer(Configuration.GetConnectionString("IbsysDatabaseContext"));
+                options.UseNpgsql(Configuration.GetConnectionString("IbsysDatabaseContext"));
                 options.EnableSensitiveDataLogging();
             });
 

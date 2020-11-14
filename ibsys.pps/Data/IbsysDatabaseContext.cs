@@ -37,16 +37,25 @@ namespace IBSYS.PPS.Models
         public DbSet<SellDirectItem> SellDirectItems { get; set; }
         public DbSet<OrderForK> OrdersForK { get; set; }
         public DbSet<BicyclePart> DispositionEParts { get; set; }
+        public DbSet<Workingtime> Workingtimes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            var converter = new ValueConverter<double[], string>(
+            var doubleConverter = new ValueConverter<double[], string>(
                 v => string.Join(";", v),
                 v => v.Split(";", StringSplitOptions.RemoveEmptyEntries).Select(val => double.Parse(val)).ToArray());
 
+            var stringConverter = new ValueConverter<string[], string>(
+                v => string.Join(";", v),
+                v => v.Split(";", StringSplitOptions.RemoveEmptyEntries).Select(value => value).ToArray());
+
             modelBuilder.Entity<ProductionOrder>()
                 .Property(e => e.Orders)
-                .HasConversion(converter);
+                .HasConversion(doubleConverter);
+
+            modelBuilder.Entity<Material>()
+                .Property(e => e.DirectAccess)
+                .HasConversion(stringConverter);
         }
 
         public DbSet<SetupEvents> SetupEvents { get; set; }

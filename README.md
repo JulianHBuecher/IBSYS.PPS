@@ -7,25 +7,27 @@
 
 ### Einleitung
 
-### Installation von Visual Studio
-Bei der Installation von Visual Studio 2019 Community Edition muss beachtet werden dass folgende Extensions initial installiert werden:
-- ASP.NET and web development
-- Node.js development
-- Data storage and processing
-- .NET Core cross-plattform development
-
-Falls dies initial nicht geschehen ist, kann dies über den Toolbar-Reiter *Tools* > *Get Tools and Features* nachgeholt werden.
-
 ### Aufsetzen des Projektes
-Nach dem initialen Klonen in die Rider IDE bzw. Visual Studio IDE kann das Projekt verwendet werden. <br> 
-Um die lokale Datenbank zu erstellen, muss zu Beginn unter *Tools* > *NuGet Package Manager* > *Package Manager Console* <br>
+Nach dem initialen Klonen in die Rider IDE bzw. Visual Studio IDE kann das Projekt verwendet werden.
+<br> Um die lokale Datenbank zu erstellen, muss zu Beginn unter *Tools* > *NuGet Package Manager* > *Package Manager Console* <br>
 mittels dem Befehl `Update-Database` die vorhandene Migration in die Datenbank eingespielt werden. Ansonsten ist das Seeding der Daten <br>
-nicht problemlos möglich.
+nicht problemlos möglich. <br> <br>
+Wenn bisher schon Migrationen der Datenbank vorhanden sind, dann wird anstatt `Update-Database` zuerst ein `Drop-Database` durchgeführt und im Anschluss wieder ein Update.
+
+### Aufsetzen der Datenbank
+Als Datenbank wird im Projekt eine Postgres Datenbank verwendet. Hierbei handelt es sich um eine Open Source Relationale Datenbank, die im vorliegenden Projekt innerhalb eines Docker Containers läuft. <br>
+Um den Container initial von Docker-Hub zu laden, muss folgender Befehl ausgeführt werden:
+```
+docker pull postgres
+```
+Für den Start der Datenbank wird im Anschluss folgender Befehl verwendet:
+```
+docker run --name db -p 5432:5432 -e POSTGRES_USER=pps -e POSTGRES_PASSWORD=ppspassword -e POSTGRES_DB=ibsys --rm -d postgres
+```
 
 ### Starten des Projektes
 Zum Starten des Projektes wird eine Console im Projektordner geöffnet und mit folgenden Kommandos das Projekt laufbereit gemacht.
-Bauen des Projektes und Herunterladen aller NuGet-Abhängigkeiten: (bei Visual Studio einfach nur **F5** drücken). <br>
-Jedoch sollte noch bevor das Web-API Projekt gestartet wird im Ordner */ClientApp* ein `npm install` aufgerufen werden. Somit werden die npm-Packages im React-Project auf den neuesten Stand gebracht.
+Bauen des Projektes und Herunterladen aller NuGet-Abhängigkeiten:
 ```
 dotnet build
 ```

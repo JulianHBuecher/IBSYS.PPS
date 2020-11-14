@@ -1,0 +1,49 @@
+version: "3.8"
+services:
+  pps-system:
+    container_name: pps-system
+    build: ./.
+    image: ibsys-pps-system:dev
+    ports: 
+      - "80:80"
+    environment: 
+      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_ENVIRONMENT=Docker
+    networks:
+      - planningnetwork
+    deploy:
+      restart_policy:
+        condition: on-failure
+  
+  database:
+    container_name: db
+    image: postgres:latest
+    environment: 
+      - POSTGRES_USER=pps
+      - POSTGRES_PASSWORD=ppspassword
+      - POSTGRES_DB=ibsys
+    networks:
+      - planningnetwork
+    deploy:
+      restart_policy:
+        condition: always
+    
+  frontend:
+    container_name: frontend
+    build: ../ClientApp/.
+    image: pps-frontend:dev
+    ports:
+      - "80:80"
+    networks:
+      planningnetwork:
+        aliases: 
+          - ibsys.planning.localhost
+    deploy:
+      restart_policy:
+        condition: on-failure
+  
+network:
+  planningnetwork:
+    driver: bridge
+
+

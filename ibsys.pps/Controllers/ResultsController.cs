@@ -59,24 +59,10 @@ namespace IBSYS.PPS.Controllers
                     Quantity = pe.Quantity
                 }));
 
-            // TODO: Extracting Workingtime out of DB
-            var workingtimeList = new List<Workingtime>
-            {
-                new Workingtime { station = "1", shift = "1", overtime = "0" },
-                new Workingtime { station = "2", shift = "1", overtime = "0" },
-                new Workingtime { station = "3", shift = "1", overtime = "0" },
-                new Workingtime { station = "4", shift = "1", overtime = "0" },
-                new Workingtime { station = "6", shift = "1", overtime = "0" },
-                new Workingtime { station = "7", shift = "1", overtime = "0" },
-                new Workingtime { station = "8", shift = "1", overtime = "0" },
-                new Workingtime { station = "9", shift = "1", overtime = "0" },
-                new Workingtime { station = "10", shift = "1", overtime = "0" },
-                new Workingtime { station = "11", shift = "1", overtime = "0" },
-                new Workingtime { station = "12", shift = "1", overtime = "0" },
-                new Workingtime { station = "13", shift = "1", overtime = "0" },
-                new Workingtime { station = "14", shift = "1", overtime = "0" },
-                new Workingtime { station = "15", shift = "1", overtime = "0" }
-            };
+            var workingtimeList = await _db.Workingtimes
+                .AsNoTracking()
+                .Select(w => w)
+                .ToListAsync();
 
             var inputFile = new Input
             {
