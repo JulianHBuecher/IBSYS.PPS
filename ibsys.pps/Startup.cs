@@ -26,14 +26,9 @@ namespace IBSYS.PPS
 
             services.AddCors(options =>
             {
-                options.AddPolicy(name: "CorsPolicy",
-                                  builder =>
-                                  {
-                                      builder
-                                        .AllowAnyOrigin()
-                                        .AllowAnyMethod()
-                                        .AllowAnyHeader();
-                                  });
+                options.AddPolicy(name: "CorsPolicy", builder => {
+                    builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+                });
             });
 
             services.AddControllers(options => 
