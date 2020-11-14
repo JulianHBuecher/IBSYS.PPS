@@ -262,7 +262,6 @@ namespace IBSYS.PPS.Controllers
 
 
             return partsForBicycle.Where(p => p.DirectAccess.Contains(ePart.Split(" ")[1])).Select(p => p).ToList();
-            //return partsForBicycle;
         }
 
         [NonAction]
@@ -327,10 +326,6 @@ namespace IBSYS.PPS.Controllers
                     .Where(m => m.Id.Equals(partNumber))
                     .Select(m => m.Amount).FirstOrDefaultAsync();
 
-                if (partNumber.Equals("24"))
-                {
-                }
-
                 var warehouseStock = Convert.ToInt32(stockQuantity);
 
                 var waitinglistWorkstations = await _db.WaitinglistWorkstations.AsNoTracking()
@@ -339,32 +334,49 @@ namespace IBSYS.PPS.Controllers
                     .SelectMany(wl => wl)
                     .ToListAsync();
 
+                // If multiple Items in Waitinglist exists, but they are the same Waitinglist
+                // Here they will be orderd and summed
+                waitinglistWorkstations = waitinglistWorkstations
+                    .GroupBy(wlw => new {
+                        wlw.Item,
+                        wlw.Batch 
+                    })
+                    .OrderBy(wlw => wlw.Key.Item)
+                    .Select(m => new WaitinglistForWorkplace
+                    {
+                        Amount = m.Select(p => p.Amount).First(),
+                        Batch = m.Key.Batch,
+                        Item = m.Key.Item,
+                        TimeNeed = m.Select(p => p.TimeNeed).Sum()
+                    }).ToList();
+
+                waitinglistWorkstations = waitinglistWorkstations
+                    .GroupBy(wlw => wlw.Item)
+                    .OrderBy(wlw => wlw.Key)
+                    .Select(m => new WaitinglistForWorkplace
+                    {
+                        Amount = m.Select(p => p.Amount).Sum(),
+                        Batch = m.Select(p => p.Batch).First(),
+                        Item = m.Key,
+                        TimeNeed = m.Select(p => p.TimeNeed).Sum()
+                    }).ToList();
+
                 var waitinglistMissingParts = await _db.WaitinglistStock.AsNoTracking()
                     .Include(w => w.WaitinglistForStock).ThenInclude(w => w.WaitinglistForWorkplaceStock)
-                    .Select(w => w.WaitinglistForStock
+                    .SelectMany(w => w.WaitinglistForStock
                         .Select(ws => ws.WaitinglistForWorkplaceStock
                         .Where(wss => part.DirectAccess.Contains(wss.Item)).ToList()))
-                    .FirstOrDefaultAsync();
+                    .ToListAsync();
 
                 var missingParts = waitinglistMissingParts.SelectMany(p => p.Select(pp => pp)).ToList();
 
                 var requiredPartsFromWaitingQueue = 0;
 
                 // Get additional required K parts resulting from queue
-                //waitinglistWorkstations.ForEach(async wlw =>
-                //{
-                //    requiredPartsFromWaitingQueue += await ExtractAdditionalKParts(wlw.Item, wlw.Amount, part.MaterialName, bicycleOne, bicycleTwo, bicycleThree);
-                //});
-
                 for (var i = 0; i < waitinglistWorkstations.Count(); i++)
                 {
                     requiredPartsFromWaitingQueue += await ExtractAdditionalKParts(waitinglistWorkstations[i].Item, waitinglistWorkstations[i].Amount, part.MaterialName, bicycleOne, bicycleTwo, bicycleThree);
                 }
-
-                //missingParts.ForEach(async mp =>
-                //{
-                //    requiredPartsFromWaitingQueue += await ExtractAdditionalKParts(mp.Item, mp.Amount, part.MaterialName, bicycleOne, bicycleTwo, bicycleThree);
-                //});
 
                 for (var i = 0; i < missingParts.Count(); i++)
                 {
