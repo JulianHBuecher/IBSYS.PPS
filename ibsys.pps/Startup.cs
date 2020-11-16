@@ -22,8 +22,6 @@ namespace IBSYS.PPS
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // services.AddControllersWithViews();
-
             services.AddCors(options =>
             {
                 options.AddPolicy(name: "CorsPolicy", builder => {
@@ -46,16 +44,11 @@ namespace IBSYS.PPS
             });
 
             services.AddScoped<DataService>();
-
-            // In production, the React files will be served from this directory
-            // services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -64,12 +57,11 @@ namespace IBSYS.PPS
             {
                 app.UseExceptionHandler("/Error");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
+                //app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseStaticFiles();
-            // app.UseSpaStaticFiles();
 
             app.UseRouting();
 
@@ -82,20 +74,6 @@ namespace IBSYS.PPS
                     pattern: "{controller}/{action=Index}/{id?}")
                 .RequireCors("CorsPolicy");
             });
-
-            
-            //app.UseSpa(spa =>
-            //{
-            //    spa.Options.SourcePath = "ClientApp";
-
-            //    if (env.IsDevelopment())
-            //    {
-            //        //spa.UseReactDevelopmentServer(npmScript: "start");
-            //        // For development purposes
-            //        // See reference: https://www.dotnetcurry.com/aspnet-core/1525/angular-react-vuejs-svelte-spa-aspnet-core-3
-            //        spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
-            //    }
-            //});
         }
     }
 }

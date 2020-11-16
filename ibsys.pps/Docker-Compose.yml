@@ -1,14 +1,16 @@
 version: "3.8"
 services:
-  pps-system:
-    container_name: pps-system
+  pps-backend:
+    container_name: pps-backend
     build: ./.
     image: ibsys-pps-system:dev
     ports: 
-      - "80:80"
+      - "90:80"
     environment: 
-      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_URLS=http://+
       - ASPNETCORE_ENVIRONMENT=Docker
+    depends_on:
+      - database
     networks:
       - planningnetwork
     deploy:
@@ -16,7 +18,7 @@ services:
         condition: on-failure
   
   database:
-    container_name: db
+    container_name: database
     image: postgres:latest
     environment: 
       - POSTGRES_USER=pps
@@ -26,24 +28,54 @@ services:
       - planningnetwork
     deploy:
       restart_policy:
-        condition: always
+        condition: any
     
-  frontend:
-    container_name: frontend
-    build: ../ClientApp/.
-    image: pps-frontend:dev
+  # frontend:
+  #   container_name: frontend
+  #   build: ../ClientApp/.
+  #   image: pps-frontend:dev
+  #   ports:
+  #     - "80:80"
+  #   networks:
+  #     planningnetwork:
+  #       aliases: 
+  #         - ibsys.planning.localhost
+  #   deploy:
+  #     restart_policy:
+  #       condition: on-failure
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
     ports:
-      - "80:80"
+      - 9200
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    environment:
+      - xpack.monitoring.enabled=true
+      - xpack.watcher.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.type=single-node
     networks:
-      planningnetwork:
-        aliases: 
-          - ibsys.planning.localhost
-    deploy:
-      restart_policy:
-        condition: on-failure
+      - planningnetwork
+    
+  kibana:
+    container_name: kibana
+    image: docker.elastic.co/kibana/kibana:7.9.3
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    networks:
+      - planningnetwork
   
-network:
+networks:
   planningnetwork:
     driver: bridge
+
+volumes:
+    elasticsearch-data:
 
 

@@ -38,6 +38,7 @@ namespace IBSYS.PPS.Models
         public DbSet<OrderForK> OrdersForK { get; set; }
         public DbSet<BicyclePart> DispositionEParts { get; set; }
         public DbSet<Workingtime> Workingtimes { get; set; }
+        public DbSet<OptimizedPart> OptimizedParts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

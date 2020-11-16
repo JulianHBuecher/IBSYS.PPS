@@ -16,7 +16,7 @@ namespace IBSYS.PPS.Models
 
     public class SelfProductionItems : Stock
     {
-
+        public string ProcessingTime { get; set; }
     }
 
     public class PurchasedItems : Stock

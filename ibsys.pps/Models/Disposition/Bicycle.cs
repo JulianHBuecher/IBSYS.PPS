@@ -29,4 +29,10 @@ namespace IBSYS.PPS.Models.Disposition
         public string Wip { get; set; }
         public string Quantity { get; set; }
     }
+
+    public class OptimizedPart : BicyclePart
+    {
+        [JsonProperty("Optimized Order")]
+        public int Optimized { get; set; }
+    }
 }

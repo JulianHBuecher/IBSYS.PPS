@@ -1,21 +1,37 @@
-﻿using System.Collections.Generic;
+﻿using IBSYS.PPS.Models;
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using Xunit;
 
-namespace IBSYS.PPS.Models
+namespace IBSYS.PPS.Logic.Tests
 {
-    public static class SeedData
+    public class Optimization
     {
-        public static async Task Initialize(IbsysDatabaseContext context)
+        public record SelfProductionItems()
         {
-            // Is the data initially seeded?
-            if (context.BillOfMaterials.Any() || context.LaborAndMachineCosts.Any() || context.SelfProductionItems.Any()
-                || context.PurchasedItems.Any())
-            {
-                return; // DB has been seeded
-            }
+            public string ItemNumber { get; init; }
+            public string Description { get; init; }
+            public string? Usage { get; init; }
+            public double ItemValue { get; init; }
+            public int QuantityInStock { get; init; }
+            public string ProcessingTime { get; init; }
+        }
 
-            await context.AddAsync(new BillOfMaterial()
+        public record OptimizedPart()
+        {
+            public int Id { get; set; }
+            public string ItemNumber { get; init; }
+            public string Description { get; init; }
+            public string ProcessingTime { get; init; }
+        }
+
+        [Fact]
+        public async Task Optimize_Production_Order()
+        {
+            var p1 = new BillOfMaterial()
             {
                 ProductName = "P1",
                 RequiredMaterials = new List<Material>()
@@ -146,9 +162,8 @@ namespace IBSYS.PPS.Models
                             }
                         }
                     }
-                });
-
-            await context.AddAsync(new BillOfMaterial()
+            };
+            var p2 = new BillOfMaterial()
             {
                 ProductName = "P2",
                 RequiredMaterials = new List<Material>()
@@ -279,9 +294,8 @@ namespace IBSYS.PPS.Models
                             }
                         }
                     }
-            });
-
-            await context.AddAsync(new BillOfMaterial()
+            };
+            var p3 = new BillOfMaterial()
             {
                 ProductName = "P3",
                 RequiredMaterials = new List<Material>()
@@ -412,99 +426,170 @@ namespace IBSYS.PPS.Models
                             }
                         }
                     }
-            });
+            };
 
-            var laborAndMachineCosts = new List<LaborAndMachineCosts>()
+            // Self-Production Items for Optimization
+            var initialStockEParts = new List<SelfProductionItems>()
                 {
-                    new LaborAndMachineCosts() { Workplace=1,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.05,IdleTimeMachineCosts=0.01},
-                    new LaborAndMachineCosts() { Workplace=2,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.05,IdleTimeMachineCosts=0.01},
-                    new LaborAndMachineCosts() { Workplace=3,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.05,IdleTimeMachineCosts=0.01},
-                    new LaborAndMachineCosts() { Workplace=4,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.05,IdleTimeMachineCosts=0.01},
-                    new LaborAndMachineCosts() { Workplace=6,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.30,IdleTimeMachineCosts=0.10},
-                    new LaborAndMachineCosts() { Workplace=7,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.30,IdleTimeMachineCosts=0.10},
-                    new LaborAndMachineCosts() { Workplace=8,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.30,IdleTimeMachineCosts=0.10},
-                    new LaborAndMachineCosts() { Workplace=9,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.80,IdleTimeMachineCosts=0.25},
-                    new LaborAndMachineCosts() { Workplace=10,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.30,IdleTimeMachineCosts=0.10},
-                    new LaborAndMachineCosts() { Workplace=11,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.30,IdleTimeMachineCosts=0.10},
-                    new LaborAndMachineCosts() { Workplace=12,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.30,IdleTimeMachineCosts=0.10},
-                    new LaborAndMachineCosts() { Workplace=13,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.50,IdleTimeMachineCosts=0.15},
-                    new LaborAndMachineCosts() { Workplace=14,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.05,IdleTimeMachineCosts=0.01},
-                    new LaborAndMachineCosts() { Workplace=15,LaborCostsFirstShift=0.45,LaborCostsSecondShift=0.55,LaborCostsThirdShift=0.70,LaborCostsOvertime=0.90,ProductiveMachineCosts=0.05,IdleTimeMachineCosts=0.01},
+                    new SelfProductionItems() { ItemNumber="P 1", Description="Children's bicycle", ItemValue=156.13, QuantityInStock=100, ProcessingTime="6-30" },
+                    new SelfProductionItems(){ ItemNumber="P 2", Description="Ladies bicycle", ItemValue=163.33, QuantityInStock=100, ProcessingTime="7-20" },
+                    new SelfProductionItems(){ ItemNumber="P 3", Description="Men's bicycle", ItemValue=165.08, QuantityInStock=100, ProcessingTime="7-30" },
+                    new SelfProductionItems(){ ItemNumber="E 4", Description="Rear wheel group", Usage="K", ItemValue=40.85, QuantityInStock=100, ProcessingTime="7-30" },
+                    new SelfProductionItems(){ ItemNumber="E 5", Description="Rear wheel group", Usage="D", ItemValue=39.85, QuantityInStock=100, ProcessingTime="7-30" },
+                    new SelfProductionItems(){ ItemNumber="E 6", Description="Rear wheel group", Usage="H", ItemValue=40.85, QuantityInStock=100, ProcessingTime="7-40" },
+                    new SelfProductionItems(){ ItemNumber="E 7", Description="Front wheel group", Usage="K", ItemValue=35.85, QuantityInStock=100, ProcessingTime="7-40" },
+                    new SelfProductionItems(){ ItemNumber="E 8", Description="Front wheel group", Usage="D", ItemValue=35.85, QuantityInStock=100, ProcessingTime="7-40" },
+                    new SelfProductionItems(){ ItemNumber="E 9", Description="Front wheel group", Usage="H", ItemValue=35.85, QuantityInStock=100, ProcessingTime="7-40" },
+                    new SelfProductionItems(){ ItemNumber="E 10", Description="Mudguard rear", Usage="K", ItemValue=12.40, QuantityInStock=100, ProcessingTime="11-50" },
+                    new SelfProductionItems(){ ItemNumber="E 11", Description="Mudguard rear", Usage="D", ItemValue=14.65, QuantityInStock=100, ProcessingTime="12-50" },
+                    new SelfProductionItems(){ ItemNumber="E 12", Description="Mudguard rear", Usage="H", ItemValue=14.65, QuantityInStock=100, ProcessingTime="12-50" },
+                    new SelfProductionItems(){ ItemNumber="E 13", Description="Mudguard front", Usage="K", ItemValue=12.40, QuantityInStock=100, ProcessingTime="11-50" },
+                    new SelfProductionItems(){ ItemNumber="E 14", Description="Mudguard front", Usage="D", ItemValue=14.65, QuantityInStock=100, ProcessingTime="12-50" },
+                    new SelfProductionItems(){ ItemNumber="E 15", Description="Mudguard front", Usage="H", ItemValue=14.65, QuantityInStock=100, ProcessingTime="12-50" },
+                    new SelfProductionItems(){ ItemNumber="E 16", Description="Handle complete", Usage="KDH", ItemValue=7.02, QuantityInStock=300, ProcessingTime="5-15" },
+                    new SelfProductionItems(){ ItemNumber="E 17", Description="Saddle complete", Usage="KDH", ItemValue=7.16, QuantityInStock=300, ProcessingTime="3-15" },
+                    new SelfProductionItems(){ ItemNumber="E 18", Description="Frame", Usage="K", ItemValue=13.15, QuantityInStock=100, ProcessingTime="10-70" },
+                    new SelfProductionItems(){ ItemNumber="E 19", Description="Frame", Usage="D", ItemValue=14.35, QuantityInStock=100, ProcessingTime="10-80" },
+                    new SelfProductionItems(){ ItemNumber="E 20", Description="Frame", Usage="H", ItemValue=15.55, QuantityInStock=100, ProcessingTime="10-70" },
+                    new SelfProductionItems(){ ItemNumber="E 26", Description="Pedal complete", Usage="KDH", ItemValue=10.50, QuantityInStock=300, ProcessingTime="5-45" },
+                    new SelfProductionItems(){ ItemNumber="E 29", Description="Front wheel complete", Usage="H", ItemValue=69.29, QuantityInStock=100, ProcessingTime="6-20" },
+                    new SelfProductionItems(){ ItemNumber="E 30", Description="Frame and wheels", Usage="H", ItemValue=127.53, QuantityInStock=100, ProcessingTime="5-20" },
+                    new SelfProductionItems(){ ItemNumber="E 31", Description="Bicycle w/o pedals", Usage="H", ItemValue=144.42, QuantityInStock=100, ProcessingTime="6-20" },
+                    new SelfProductionItems(){ ItemNumber="E 49", Description="Front wheel complete", Usage="K", ItemValue=64.64, QuantityInStock=100, ProcessingTime="6-20" },
+                    new SelfProductionItems(){ ItemNumber="E 50", Description="Frame and wheels", Usage="K", ItemValue=120.63, QuantityInStock=100, ProcessingTime="5-30" },
+                    new SelfProductionItems(){ ItemNumber="E 51", Description="Bicycle w/o pedals", Usage="K", ItemValue=137.47, QuantityInStock=100, ProcessingTime="5-20" },
+                    new SelfProductionItems(){ ItemNumber="E 54", Description="Front wheel complete", Usage="D", ItemValue=68.09, QuantityInStock=100, ProcessingTime="6-20" },
+                    new SelfProductionItems(){ ItemNumber="E 55", Description="Frame and wheels", Usage="D", ItemValue=125.33, QuantityInStock=100, ProcessingTime="5-30" },
+                    new SelfProductionItems(){ ItemNumber="E 56", Description="Bicycle w/o pedals", Usage="D", ItemValue=142.67, QuantityInStock=100, ProcessingTime="6-20" }
                 };
 
-            var initialStockEParts = new List<SelfProductionItems>()
+            var p1Parts = new List<Material>();
+            var p2Parts = new List<Material>();
+            var p3Parts = new List<Material>();
+
+            foreach (var material in p1.RequiredMaterials)
             {
-                new SelfProductionItems() { ItemNumber="P 1", Description="Children's bicycle", ItemValue=156.13, QuantityInStock=100, ProcessingTime="6-30" },
-                new SelfProductionItems(){ ItemNumber="P 2", Description="Ladies bicycle", ItemValue=163.33, QuantityInStock=100, ProcessingTime="7-20" },
-                new SelfProductionItems(){ ItemNumber="P 3", Description="Men's bicycle", ItemValue=165.08, QuantityInStock=100, ProcessingTime="7-30" },
-                new SelfProductionItems(){ ItemNumber="E 4", Description="Rear wheel group", Usage="K", ItemValue=40.85, QuantityInStock=100, ProcessingTime="7-30" },
-                new SelfProductionItems(){ ItemNumber="E 5", Description="Rear wheel group", Usage="D", ItemValue=39.85, QuantityInStock=100, ProcessingTime="7-30" },
-                new SelfProductionItems(){ ItemNumber="E 6", Description="Rear wheel group", Usage="H", ItemValue=40.85, QuantityInStock=100, ProcessingTime="7-40" },
-                new SelfProductionItems(){ ItemNumber="E 7", Description="Front wheel group", Usage="K", ItemValue=35.85, QuantityInStock=100, ProcessingTime="7-40" },
-                new SelfProductionItems(){ ItemNumber="E 8", Description="Front wheel group", Usage="D", ItemValue=35.85, QuantityInStock=100, ProcessingTime="7-40" },
-                new SelfProductionItems(){ ItemNumber="E 9", Description="Front wheel group", Usage="H", ItemValue=35.85, QuantityInStock=100, ProcessingTime="7-40" },
-                new SelfProductionItems(){ ItemNumber="E 10", Description="Mudguard rear", Usage="K", ItemValue=12.40, QuantityInStock=100, ProcessingTime="11-50" },
-                new SelfProductionItems(){ ItemNumber="E 11", Description="Mudguard rear", Usage="D", ItemValue=14.65, QuantityInStock=100, ProcessingTime="12-50" },
-                new SelfProductionItems(){ ItemNumber="E 12", Description="Mudguard rear", Usage="H", ItemValue=14.65, QuantityInStock=100, ProcessingTime="12-50" },
-                new SelfProductionItems(){ ItemNumber="E 13", Description="Mudguard front", Usage="K", ItemValue=12.40, QuantityInStock=100, ProcessingTime="11-50" },
-                new SelfProductionItems(){ ItemNumber="E 14", Description="Mudguard front", Usage="D", ItemValue=14.65, QuantityInStock=100, ProcessingTime="12-50" },
-                new SelfProductionItems(){ ItemNumber="E 15", Description="Mudguard front", Usage="H", ItemValue=14.65, QuantityInStock=100, ProcessingTime="12-50" },
-                new SelfProductionItems(){ ItemNumber="E 16", Description="Handle complete", Usage="KDH", ItemValue=7.02, QuantityInStock=300, ProcessingTime="5-15" },
-                new SelfProductionItems(){ ItemNumber="E 17", Description="Saddle complete", Usage="KDH", ItemValue=7.16, QuantityInStock=300, ProcessingTime="3-15" },
-                new SelfProductionItems(){ ItemNumber="E 18", Description="Frame", Usage="K", ItemValue=13.15, QuantityInStock=100, ProcessingTime="10-70" },
-                new SelfProductionItems(){ ItemNumber="E 19", Description="Frame", Usage="D", ItemValue=14.35, QuantityInStock=100, ProcessingTime="10-80" },
-                new SelfProductionItems(){ ItemNumber="E 20", Description="Frame", Usage="H", ItemValue=15.55, QuantityInStock=100, ProcessingTime="10-70" },
-                new SelfProductionItems(){ ItemNumber="E 26", Description="Pedal complete", Usage="KDH", ItemValue=10.50, QuantityInStock=300, ProcessingTime="5-45" },
-                new SelfProductionItems(){ ItemNumber="E 29", Description="Front wheel complete", Usage="H", ItemValue=69.29, QuantityInStock=100, ProcessingTime="6-20" },
-                new SelfProductionItems(){ ItemNumber="E 30", Description="Frame and wheels", Usage="H", ItemValue=127.53, QuantityInStock=100, ProcessingTime="5-20" },
-                new SelfProductionItems(){ ItemNumber="E 31", Description="Bicycle w/o pedals", Usage="H", ItemValue=144.42, QuantityInStock=100, ProcessingTime="6-20" },
-                new SelfProductionItems(){ ItemNumber="E 49", Description="Front wheel complete", Usage="K", ItemValue=64.64, QuantityInStock=100, ProcessingTime="6-20" },
-                new SelfProductionItems(){ ItemNumber="E 50", Description="Frame and wheels", Usage="K", ItemValue=120.63, QuantityInStock=100, ProcessingTime="5-30" },
-                new SelfProductionItems(){ ItemNumber="E 51", Description="Bicycle w/o pedals", Usage="K", ItemValue=137.47, QuantityInStock=100, ProcessingTime="5-20" },
-                new SelfProductionItems(){ ItemNumber="E 54", Description="Front wheel complete", Usage="D", ItemValue=68.09, QuantityInStock=100, ProcessingTime="6-20" },
-                new SelfProductionItems(){ ItemNumber="E 55", Description="Frame and wheels", Usage="D", ItemValue=125.33, QuantityInStock=100, ProcessingTime="5-30" },
-                new SelfProductionItems(){ ItemNumber="E 56", Description="Bicycle w/o pedals", Usage="D", ItemValue=142.67, QuantityInStock=100, ProcessingTime="6-20" }
-            };
+                var filteredPart = await FilterNestedMaterialsByName("E", material);
+                p1Parts.AddRange(filteredPart);
+            }
 
-            var initialStockKParts = new List<PurchasedItems>()
+            foreach (var material in p2.RequiredMaterials)
             {
-                new PurchasedItems() { ItemNumber="K 21", Description="Chain", Usage="K", ItemValue=5.00, QuantityInStock=300, DiscountQuantity=300, OrderCosts=50.00, ProcureLeadTime=1.8, Deviation=0.4 },
-                new PurchasedItems() { ItemNumber="K 22", Description="Chain", Usage="D", ItemValue=6.50, QuantityInStock=300, DiscountQuantity=300, OrderCosts=50.00, ProcureLeadTime=1.7, Deviation=0.4 },
-                new PurchasedItems() { ItemNumber="K 23", Description="Chain", Usage="H", ItemValue=6.50, QuantityInStock=300, DiscountQuantity=300, OrderCosts=50.00, ProcureLeadTime=1.2, Deviation=0.2 },
-                new PurchasedItems() { ItemNumber="K 24", Description="Nut 3/8\"", Usage="KDH", ItemValue=0.06, QuantityInStock=6100, DiscountQuantity=6100, OrderCosts=100.00, ProcureLeadTime=3.2, Deviation=0.3 },
-                new PurchasedItems() { ItemNumber="K 25", Description="Washer 3/8\"", Usage="KDH", ItemValue=0.06, QuantityInStock=3600, DiscountQuantity=3600, OrderCosts=50.00, ProcureLeadTime=0.9, Deviation=0.2 },
-                new PurchasedItems() { ItemNumber="K 27", Description="Screw 3/8\"", Usage="KDH", ItemValue=0.10, QuantityInStock=1800, DiscountQuantity=1800, OrderCosts=75.00, ProcureLeadTime=0.9, Deviation=0.2 },
-                new PurchasedItems() { ItemNumber="K 28", Description="Tube 3/4\"", Usage="KDH", ItemValue=1.20, QuantityInStock=4500, DiscountQuantity=4500, OrderCosts=50.00, ProcureLeadTime=1.7, Deviation=0.4 },
-                new PurchasedItems() { ItemNumber="K 32", Description="Paint", Usage="KDH", ItemValue=0.75, QuantityInStock=2700, DiscountQuantity=2700, OrderCosts=50.00, ProcureLeadTime=2.1, Deviation=0.5 },
-                new PurchasedItems() { ItemNumber="K 33", Description="Rim complete", Usage="H", ItemValue=22.00, QuantityInStock=900, DiscountQuantity=900, OrderCosts=75.00, ProcureLeadTime=1.9, Deviation=0.5 },
-                new PurchasedItems() { ItemNumber="K 34", Description="Spoke", Usage="H", ItemValue=0.10, QuantityInStock=22000, DiscountQuantity=22000, OrderCosts=50.00, ProcureLeadTime=1.6, Deviation=0.3 },
-                new PurchasedItems() { ItemNumber="K 35", Description="Taper sleeve", Usage="KDH", ItemValue=1.00, QuantityInStock=3600, DiscountQuantity=3600, OrderCosts=75.00, ProcureLeadTime=2.2, Deviation=0.4 },
-                new PurchasedItems() { ItemNumber="K 36", Description="Free wheel", Usage="KDH", ItemValue=8.00, QuantityInStock=900, DiscountQuantity=900, OrderCosts=100.00, ProcureLeadTime=1.2, Deviation=0.1 },
-                new PurchasedItems() { ItemNumber="K 37", Description="Fork", Usage="KDH", ItemValue=1.50, QuantityInStock=900, DiscountQuantity=900, OrderCosts=50.00, ProcureLeadTime=1.5, Deviation=0.3 },
-                new PurchasedItems() { ItemNumber="K 38", Description="Axle", Usage="KDH", ItemValue=1.50, QuantityInStock=300, DiscountQuantity=300, OrderCosts=50.00, ProcureLeadTime=1.7, Deviation=0.4 },
-                new PurchasedItems() { ItemNumber="K 39", Description="Sheet", Usage="KDH", ItemValue=1.50, QuantityInStock=900, DiscountQuantity=1800, OrderCosts=75.00, ProcureLeadTime=1.5, Deviation=0.3 },
-                new PurchasedItems() { ItemNumber="K 40", Description="Handle bar", Usage="KDH", ItemValue=2.50, QuantityInStock=900, DiscountQuantity=900, OrderCosts=50.00, ProcureLeadTime=1.7, Deviation=0.2 },
-                new PurchasedItems() { ItemNumber="K 41", Description="Nut 3/4\"", Usage="KDH", ItemValue=0.06, QuantityInStock=900, DiscountQuantity=900, OrderCosts=50.00, ProcureLeadTime=0.9, Deviation=0.2 },
-                new PurchasedItems() { ItemNumber="K 42", Description="Handle grip", Usage="KDH", ItemValue=0.10, QuantityInStock=1800, DiscountQuantity=1800, OrderCosts=50.00, ProcureLeadTime=1.2, Deviation=0.3 },
-                new PurchasedItems() { ItemNumber="K 43", Description="Saddle", Usage="KDH", ItemValue=5.00, QuantityInStock=1900, DiscountQuantity=2700, OrderCosts=75.00, ProcureLeadTime=2.0, Deviation=0.5 },
-                new PurchasedItems() { ItemNumber="K 44", Description="Bar 1/2\"", Usage="KDH", ItemValue=0.50, QuantityInStock=2700, DiscountQuantity=900, OrderCosts=50.00, ProcureLeadTime=1.0, Deviation=0.2 },
-                new PurchasedItems() { ItemNumber="K 45", Description="Nut 1/4\"", Usage="KDH", ItemValue=0.06, QuantityInStock=900, DiscountQuantity=900, OrderCosts=50.00, ProcureLeadTime=1.7, Deviation=0.3 },
-                new PurchasedItems() { ItemNumber="K 46", Description="Screw 1/4\"", Usage="KDH", ItemValue=0.10, QuantityInStock=900, DiscountQuantity=900, OrderCosts=50.00, ProcureLeadTime=0.9, Deviation=0.3 },
-                new PurchasedItems() { ItemNumber="K 47", Description="Sprocket", Usage="KDH", ItemValue=3.50, QuantityInStock=900, DiscountQuantity=900, OrderCosts=50.00, ProcureLeadTime=1.1, Deviation=0.1 },
-                new PurchasedItems() { ItemNumber="K 48", Description="Pedal", Usage="KDH", ItemValue=1.50, QuantityInStock=1800, DiscountQuantity=1800, OrderCosts=75.00, ProcureLeadTime=1.0, Deviation=0.2 },
-                new PurchasedItems() { ItemNumber="K 52", Description="Rim complete", Usage="K", ItemValue=22.00, QuantityInStock=600, DiscountQuantity=600, OrderCosts=50.00, ProcureLeadTime=1.6, Deviation=0.4 },
-                new PurchasedItems() { ItemNumber="K 53", Description="Spoke", Usage="K", ItemValue=0.10, QuantityInStock=22000, DiscountQuantity=22000, OrderCosts=50.00, ProcureLeadTime=1.6, Deviation=0.2 },
-                new PurchasedItems() { ItemNumber="K 57", Description="Rim complete", Usage="D", ItemValue=22.00, QuantityInStock=600, DiscountQuantity=600, OrderCosts=50.00, ProcureLeadTime=1.7, Deviation=0.3 },
-                new PurchasedItems() { ItemNumber="K 58", Description="Spoke", Usage="D", ItemValue=0.10, QuantityInStock=22000, DiscountQuantity=22000, OrderCosts=50.00, ProcureLeadTime=1.6, Deviation=0.5 },
-                new PurchasedItems() { ItemNumber="K 59", Description="Welding wires", Usage="KDH", ItemValue=0.15, QuantityInStock=1800, DiscountQuantity=1800, OrderCosts=50.00, ProcureLeadTime=0.7, Deviation=0.2 },
-            };
+                var filteredPart = await FilterNestedMaterialsByName("E", material);
+                p2Parts.AddRange(filteredPart);
+            }
 
-            //await context.AddRangeAsync(new List<BillOfMaterial> { p1, p2, p3 });
-            await context.AddRangeAsync(laborAndMachineCosts);
-            await context.AddRangeAsync(initialStockEParts);
-            await context.AddRangeAsync(initialStockKParts);
+            foreach (var material in p3.RequiredMaterials)
+            {
+                var filteredPart = await FilterNestedMaterialsByName("E", material);
+                p3Parts.AddRange(filteredPart);
+            }
 
-            await context.SaveChangesAsync();
+            var optimizedPartsP1 = initialStockEParts.Select(e => e).Where(p => p1Parts.Select(pp => pp.MaterialName).Contains(p.ItemNumber) || p.ItemNumber == "P 1");
+            var optimizedPartsP2 = initialStockEParts.Select(e => e).Where(p => p2Parts.Select(pp => pp.MaterialName).Contains(p.ItemNumber) || p.ItemNumber == "P 2");
+            var optimizedPartsP3 = initialStockEParts.Select(e => e).Where(p => p3Parts.Select(pp => pp.MaterialName).Contains(p.ItemNumber) || p.ItemNumber == "P 3");
+
+            optimizedPartsP1 = optimizedPartsP1.Select(p => p).OrderByDescending(p => p.ProcessingTime.Split("-")[1]).ToList();
+            optimizedPartsP2 = optimizedPartsP2.Select(p => p).OrderByDescending(p => p.ProcessingTime.Split("-")[1]).ToList();
+            optimizedPartsP3 = optimizedPartsP3.Select(p => p).OrderByDescending(p => p.ProcessingTime.Split("-")[1]).ToList();
+
+            var optimizedParts = new List<Material>();
+
+            foreach (var material in optimizedPartsP1)
+            {
+                optimizedParts.Add(p1Parts.Select(p => p).Where(p => p.MaterialName.Equals(material.ItemNumber)).FirstOrDefault());
+            }
+
+            //var optimizedParts = initialStockEParts.Select(p => p).OrderBy(p => p.ProcessingTime.Split("-")[1]).ToList();
+
+            Assert.Equal(30, optimizedParts.Count());
+        }
+
+        public async Task<List<Material>> FilterNestedMaterialsByName(string parts, Material ml)
+        {
+            var partsForBicycle = new List<Material>();
+
+            if (ml.MaterialName.StartsWith(parts))
+            {
+                partsForBicycle.Add(new Material { MaterialName = ml.MaterialName, QuantityNeeded = ml.QuantityNeeded, DirectAccess = ml.DirectAccess });
+                if (ml.MaterialName.StartsWith("E") && ml.MaterialNeeded.Count != 0)
+                {
+                    foreach (var material in ml.MaterialNeeded)
+                    {
+                        partsForBicycle.AddRange(await FilterNestedMaterialsByName(parts, material));
+                    }
+                }
+            }
+            else
+            {
+                if (ml.MaterialName.StartsWith("E") && ml.MaterialNeeded.Count != 0)
+                {
+                    foreach (var material in ml.MaterialNeeded)
+                    {
+                        partsForBicycle.AddRange(await FilterNestedMaterialsByName(parts, material));
+                    }
+                }
+            }
+
+            return partsForBicycle;
+        }
+
+        public async Task<List<Material>> FilterKMaterialsByNameAndEPart(string parts, string ePart, Material ml)
+        {
+            var partsForBicycle = new List<Material>();
+            if (!ePart.StartsWith("P"))
+            {
+                if (ml.MaterialName.StartsWith("E") && ml.MaterialNeeded.Count != 0)
+                {
+                    if (ml.MaterialName.Equals(ePart))
+                    {
+                        partsForBicycle.AddRange(await FilterNestedMaterialsByName(parts, ml));
+                    }
+                    else
+                    {
+                        foreach (var material in ml.MaterialNeeded)
+                        {
+                            if (ml.MaterialName.Equals(ePart))
+                            {
+                                partsForBicycle.AddRange(await FilterNestedMaterialsByName(parts, ml));
+                            }
+                            partsForBicycle.AddRange(await FilterKMaterialsByNameAndEPart(parts, ePart, material));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (ml.MaterialName.StartsWith("E") && ml.MaterialNeeded.Count != 0)
+                {
+                    foreach (var material in ml.MaterialNeeded)
+                    {
+                        partsForBicycle.AddRange(await FilterKMaterialsByNameAndEPart(parts, ePart, material));
+                    }
+                }
+                else
+                {
+                    partsForBicycle.AddRange(await FilterNestedMaterialsByName(parts, ml));
+                }
+            }
+
+
+            return partsForBicycle.Where(p => p.DirectAccess.Contains(ePart.Split(" ")[1])).Select(p => p).ToList();
+            //return partsForBicycle;
+        }
+
+        public List<Material> SumFilteredMaterials(List<Material> materials)
+        {
+            var partsOrderedAndSummed = materials.GroupBy(p => p.MaterialName).OrderBy(p => p.Key)
+                .Select(p => new Material
+                {
+                    MaterialName = p.Key,
+                    QuantityNeeded = p.Select(pp => pp.QuantityNeeded).Sum(),
+                    DirectAccess = p.Select(pp => pp.DirectAccess).First()
+                })
+                .ToList();
+
+            return partsOrderedAndSummed;
         }
     }
 }

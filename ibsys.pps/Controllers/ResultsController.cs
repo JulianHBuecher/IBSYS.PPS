@@ -43,17 +43,16 @@ namespace IBSYS.PPS.Controllers
                 .Select(o => o)
                 .ToListAsync();
 
-            var productionOrdersEParts = await _db.DispositionEParts
+            var productionOrdersEParts = await _db.OptimizedParts
                 .AsNoTracking()
                 .Select(d => d)
+                .OrderBy(d => d.Optimized)
                 .ToListAsync();
 
             var productionList = new List<Production>();
 
-            var summedOrdersEParts = SumFilteredMaterials(productionOrdersEParts);
-
             productionList.AddRange(
-                summedOrdersEParts.Select(pe => new Production
+                productionOrdersEParts.Select(pe => new Production
                 {
                     Article = Regex.Match(pe.Name, @"\d+").Value,
                     Quantity = pe.Quantity

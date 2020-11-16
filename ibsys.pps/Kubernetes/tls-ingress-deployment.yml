@@ -1,0 +1,36 @@
+# Customizing your Ingress Deployment (Nginx Ingresses, Helm, Istio): 
+# https://github.com/brbarnett/hello-k8s
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+    name: tls-ingress
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      nginx.ingress.kubernetes.io/use-regex: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+      service.beta.kubernetes.io/do-loadbalancer-enable-proxy-protocol: "true"
+      nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
+spec:
+    tls:
+    - hosts:
+      - ibsys2pps-k8s.ddns.net
+      secretName: tls-secret
+    rules:
+    - host: ibsys2pps-k8s.ddns.net
+      http:
+        paths:
+        - backend:
+            serviceName: kibana
+            servicePort: 80
+          path: /kibana(/|$)(.*)
+        - backend:
+            serviceName: pps-backend
+            servicePort: 80
+          path: /backend(/|$)(.*)
+        # - backend:
+        #     serviceName: frontend
+        #     servicePort: 80
+        #   path: /(.*)

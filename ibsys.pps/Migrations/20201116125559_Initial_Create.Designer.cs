@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IBSYS.PPS.Migrations
 {
     [DbContext(typeof(IbsysDatabaseContext))]
-    [Migration("20201113151358_Initial_Create")]
+    [Migration("20201116125559_Initial_Create")]
     partial class Initial_Create
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -38,6 +38,10 @@ namespace IBSYS.PPS.Migrations
                         .HasColumnType("integer")
                         .UseIdentityByDefaultColumn();
 
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
@@ -62,6 +66,8 @@ namespace IBSYS.PPS.Migrations
                     b.HasKey("ID");
 
                     b.ToTable("DispositionEParts");
+
+                    b.HasDiscriminator<string>("Discriminator").HasValue("BicyclePart");
                 });
 
             modelBuilder.Entity("IBSYS.PPS.Models.Generated.Article", b =>
@@ -300,6 +306,9 @@ namespace IBSYS.PPS.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .UseIdentityByDefaultColumn();
+
+                    b.Property<int>("AdditionalParts")
+                        .HasColumnType("integer");
 
                     b.Property<int>("OrderModus")
                         .HasColumnType("integer");
@@ -556,6 +565,16 @@ namespace IBSYS.PPS.Migrations
                     b.ToTable("WaitinglistForWorkstations");
                 });
 
+            modelBuilder.Entity("IBSYS.PPS.Models.Disposition.OptimizedPart", b =>
+                {
+                    b.HasBaseType("IBSYS.PPS.Models.Disposition.BicyclePart");
+
+                    b.Property<int>("Optimized")
+                        .HasColumnType("integer");
+
+                    b.HasDiscriminator().HasValue("OptimizedPart");
+                });
+
             modelBuilder.Entity("IBSYS.PPS.Models.PurchasedItems", b =>
                 {
                     b.HasBaseType("IBSYS.PPS.Models.Stock");
@@ -578,6 +597,9 @@ namespace IBSYS.PPS.Migrations
             modelBuilder.Entity("IBSYS.PPS.Models.SelfProductionItems", b =>
                 {
                     b.HasBaseType("IBSYS.PPS.Models.Stock");
+
+                    b.Property<string>("ProcessingTime")
+                        .HasColumnType("text");
 
                     b.HasDiscriminator().HasValue("SelfProductionItems");
                 });

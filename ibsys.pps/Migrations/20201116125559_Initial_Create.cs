@@ -31,7 +31,9 @@ namespace IBSYS.PPS.Migrations
                     WarehouseStockPassed = table.Column<string>(type: "text", nullable: true),
                     OrdersInQueueOwn = table.Column<string>(type: "text", nullable: true),
                     Wip = table.Column<string>(type: "text", nullable: true),
-                    Quantity = table.Column<string>(type: "text", nullable: true)
+                    Quantity = table.Column<string>(type: "text", nullable: true),
+                    Discriminator = table.Column<string>(type: "text", nullable: false),
+                    Optimized = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -93,7 +95,8 @@ namespace IBSYS.PPS.Migrations
                     DiscountQuantity = table.Column<int>(type: "integer", nullable: true),
                     OrderCosts = table.Column<double>(type: "double precision", nullable: true),
                     ProcureLeadTime = table.Column<double>(type: "double precision", nullable: true),
-                    Deviation = table.Column<double>(type: "double precision", nullable: true)
+                    Deviation = table.Column<double>(type: "double precision", nullable: true),
+                    ProcessingTime = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -125,7 +128,8 @@ namespace IBSYS.PPS.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     PartName = table.Column<string>(type: "text", nullable: true),
                     OrderQuantity = table.Column<string>(type: "text", nullable: true),
-                    OrderModus = table.Column<int>(type: "integer", nullable: false)
+                    OrderModus = table.Column<int>(type: "integer", nullable: false),
+                    AdditionalParts = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
