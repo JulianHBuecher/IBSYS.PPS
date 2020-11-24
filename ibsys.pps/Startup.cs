@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using System.Collections.Generic;
 
 namespace IBSYS.PPS
 {
@@ -47,9 +48,9 @@ namespace IBSYS.PPS
             services.AddScoped<DataService>();
 
             // Adding the Swagger API to the project
-            services.AddSwaggerGen(context =>
+            services.AddSwaggerGen(options =>
             {
-                context.SwaggerDoc("v1", new OpenApiInfo
+                options.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Version = "v1",
                     Title = "IBSYS 2 Planning Tool API",
@@ -58,7 +59,7 @@ namespace IBSYS.PPS
                     {
                         Name = "Julian Bücher",
                         Email = "buju1023@hs-karlsruhe.de"
-                    }
+                    },
                 });
             });
         }
@@ -67,7 +68,16 @@ namespace IBSYS.PPS
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             // Enable the Swagger Middleware to serve generated JSON
-            app.UseSwagger();
+            app.UseSwagger(context =>
+            {
+                context.PreSerializeFilters.Add((swagger, httpRequest) =>
+                {
+                    swagger.Servers = new List<OpenApiServer>
+                    {
+                        new OpenApiServer { Url = $"{httpRequest.Scheme}://{httpRequest.Host.Value}/backend" }
+                    };
+                });
+            });
 
             if (env.IsDevelopment())
             {
@@ -88,8 +98,8 @@ namespace IBSYS.PPS
                 // Enable Swagger Middleware to serve the UI
                 app.UseSwaggerUI(context =>
                 {
-                    context.SwaggerEndpoint("./swagger/v1/swagger.json", "IBSYS Planning API");
-                    context.RoutePrefix = "backend";
+                    context.SwaggerEndpoint("/swagger/v1/swagger.json", "IBSYS Planning API");
+                    context.RoutePrefix = string.Empty;
                 });
             }
 

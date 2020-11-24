@@ -30,6 +30,10 @@ spec:
             serviceName: pps-backend
             servicePort: 80
           path: /backend(/|$)(.*)
+        - backend:
+            serviceName: pps-backend
+            servicePort: 80
+          path: /swagger(/|$)(.*)
         # - backend:
         #     serviceName: frontend
         #     servicePort: 80
