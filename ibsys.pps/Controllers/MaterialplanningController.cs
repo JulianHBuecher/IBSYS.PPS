@@ -35,13 +35,33 @@ namespace IBSYS.PPS.Controllers
                 .Select(po => po)
                 .ToListAsync();
 
+            var changedRequirements = await _db.DispositionEParts
+                .AsNoTracking()
+                .Where(d => d.Name.Equals("P1") || d.Name.Equals("P2") || d.Name.Equals("P3"))
+                .Select(d => new { d.Name, d.Quantity })
+                .ToListAsync();
+
+            var changedRequirementsTupel = changedRequirements.Select(d => (Bicycle: d.Name, Amount: d.Quantity)).ToList();
+
             double[,] productionMatrix = new double[3,4];
 
+            // If required parts in dispositions are changed
+            // They will be corrected in the production matrix
             for (var i = 0; i < productionOrders.Count(); i++)
             {
                 for (var j = 0; j < productionOrders[i].Orders.Count(); j++)
                 {
-                    productionMatrix[i,j] = productionOrders[i].Orders[j];
+                    if (j is 0)
+                    {
+                        var req = changedRequirementsTupel.Where(c => c.Bicycle.Contains("P" + (i + 1).ToString())).Select(c => c).FirstOrDefault();
+                        if (Convert.ToDouble(req.Amount) != productionOrders[i].Orders[j]) 
+                        {
+                            productionMatrix[i, j] = Convert.ToInt32(req.Amount);
+                        }
+                    } else
+                    {
+                        productionMatrix[i, j] = productionOrders[i].Orders[j];
+                    }
                 }
             }
 
@@ -119,8 +139,6 @@ namespace IBSYS.PPS.Controllers
             try
             {
                 var orders = await PlaceOrder(calculatedNewParts, completedPartsForP1, p1, p2, p3);
-
-                var n = orders.Capacity;
 
                 return Ok(orders
                     .Where(o => (o.OrderModus != 0 && Convert.ToInt32(o.OrderQuantity) != 0))

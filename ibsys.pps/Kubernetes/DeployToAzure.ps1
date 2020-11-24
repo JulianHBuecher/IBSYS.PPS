@@ -34,7 +34,7 @@ function Install() {
     --set controller.nodeSelector."beta\.kubernetes\.io/os"=linux `
     --set controller.replicaCount=1 `
     --set defaultBackend.nodeSelector."beta\.kubernetes\.io/os"=linux `
-    --set controller.service.loadBalancerIP="20.52.2.68" `
+    --set controller.service.loadBalancerIP="20.52.25.31" `
     --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"="ibsys2pps-k8s"
     
     Start-Sleep -s 10

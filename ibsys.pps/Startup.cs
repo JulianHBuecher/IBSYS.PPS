@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 
 namespace IBSYS.PPS
 {
@@ -44,20 +45,52 @@ namespace IBSYS.PPS
             });
 
             services.AddScoped<DataService>();
+
+            // Adding the Swagger API to the project
+            services.AddSwaggerGen(context =>
+            {
+                context.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Version = "v1",
+                    Title = "IBSYS 2 Planning Tool API",
+                    Description = "Description of all public endpoints for further development",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Julian Bücher",
+                        Email = "buju1023@hs-karlsruhe.de"
+                    }
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // Enable the Swagger Middleware to serve generated JSON
+            app.UseSwagger();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+
+                // Enable Swagger Middleware to serve the UI
+                app.UseSwaggerUI(context =>
+                {
+                    context.SwaggerEndpoint("/swagger/v1/swagger.json", "IBSYS Planning API");
+                });
             }
             else
             {
                 app.UseExceptionHandler("/Error");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 //app.UseHsts();
+                
+                // Enable Swagger Middleware to serve the UI
+                app.UseSwaggerUI(context =>
+                {
+                    context.SwaggerEndpoint("./swagger/v1/swagger.json", "IBSYS Planning API");
+                    context.RoutePrefix = "backend";
+                });
             }
 
             //app.UseHttpsRedirection();
