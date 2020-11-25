@@ -162,7 +162,8 @@ namespace IBSYS.PPS.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Part = table.Column<string>(type: "text", nullable: true),
-                    Amount = table.Column<int>(type: "integer", nullable: false)
+                    Amount = table.Column<int>(type: "integer", nullable: false),
+                    ReferenceToBicycle = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {

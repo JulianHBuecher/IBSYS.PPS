@@ -350,6 +350,9 @@ namespace IBSYS.PPS.Migrations
                     b.Property<string>("Part")
                         .HasColumnType("text");
 
+                    b.Property<string>("ReferenceToBicycle")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.ToTable("PlannedWarehouseStocks");

@@ -62,6 +62,7 @@ namespace IBSYS.PPS
                     },
                 });
             });
+            //services.AddSwaggerGenNewtonsoftSupport();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -70,11 +71,14 @@ namespace IBSYS.PPS
             // Enable the Swagger Middleware to serve generated JSON
             app.UseSwagger(context =>
             {
+                context.RouteTemplate = "swagger/{documentName}/swagger.json";
+
                 context.PreSerializeFilters.Add((swagger, httpRequest) =>
                 {
                     swagger.Servers = new List<OpenApiServer>
                     {
-                        new OpenApiServer { Url = $"{httpRequest.Scheme}://{httpRequest.Host.Value}/backend" }
+                        new OpenApiServer { Url = $"https://{httpRequest.Host.Value}/backend" },
+                        new OpenApiServer { Url = $"https://{httpRequest.Host.Value}" }
                     };
                 });
             });
@@ -98,8 +102,8 @@ namespace IBSYS.PPS
                 // Enable Swagger Middleware to serve the UI
                 app.UseSwaggerUI(context =>
                 {
-                    context.SwaggerEndpoint("/swagger/v1/swagger.json", "IBSYS Planning API");
-                    context.RoutePrefix = string.Empty;
+                    context.SwaggerEndpoint("v1/swagger.json", "IBSYS Planning API K8S");
+                    context.RoutePrefix = "swagger";
                 });
             }
 

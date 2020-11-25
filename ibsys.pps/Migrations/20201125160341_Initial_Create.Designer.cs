@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IBSYS.PPS.Migrations
 {
     [DbContext(typeof(IbsysDatabaseContext))]
-    [Migration("20201116125559_Initial_Create")]
+    [Migration("20201125160341_Initial_Create")]
     partial class Initial_Create
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -350,6 +350,9 @@ namespace IBSYS.PPS.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Part")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReferenceToBicycle")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
