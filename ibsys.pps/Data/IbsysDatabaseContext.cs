@@ -158,6 +158,7 @@ namespace IBSYS.PPS.Models
         public int Id { get; set; }
         public string Part { get; set; }
         public int Amount { get; set; }
+        public string ReferenceToBicycle { get; set; }
     }
     [Table("SetupEvents")]
     public class SetupEvents

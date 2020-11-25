@@ -90,6 +90,16 @@ namespace IBSYS.PPS.Controllers
                 if (productionOrders != null)
                 {
                     await _db.AddRangeAsync(productionOrders);
+
+                    await _db.PlannedWarehouseStocks
+                        .AddRangeAsync(productionOrders.Select(po =>
+                            new PlannedWarehouseStock
+                            {
+                                Part = po.Name,
+                                Amount = Convert.ToInt32(po.PlannedWarehouseFollowing),
+                                ReferenceToBicycle = productionOrders.Where(po => po.Name.Contains("P")).Select(po => po.Name).FirstOrDefault()
+                            }
+                        ).ToList());
                 }
 
                 await _db.SaveChangesAsync();
@@ -100,6 +110,31 @@ namespace IBSYS.PPS.Controllers
             {
                 return BadRequest($"Something went wrong, {ex.Message}");
             }
+        }
+
+        [HttpGet("capacity")]
+        public async Task<ActionResult> GetCapacityRequirements()
+        {
+            var productionOrders = await _db.ProductionOrders
+                .AsNoTracking()
+                .Select(po => po)
+                .ToListAsync();
+
+            var plannedStocks = new Dictionary<String, List<PlannedWarehouseStock>>();
+
+            foreach (var id in new string[] { "p1", "p2", "p3" })
+            {
+                var plannedStock = await _db.PlannedWarehouseStocks
+                    .AsNoTracking()
+                    .Where(pw => pw.ReferenceToBicycle.ToLower().Equals(id))
+                    .Select(pw => pw)
+                    .ToListAsync();
+
+                plannedStocks.Add(id, plannedStock);
+            }
+
+            var capRequirements = await ExecuteCapacityRequirements(productionOrders, productionOrders, plannedStocks);
+            return Ok(capRequirements);
         }
 
         [HttpPost("syncresult/capacityplanning")]
@@ -149,34 +184,6 @@ namespace IBSYS.PPS.Controllers
             {
                 return BadRequest($"Something went wrong, {ex.Message}");
             }
-        }
-
-        [HttpPost("capacity")]
-        public async Task<ActionResult> GetCapacityRequirements()
-        {
-            var productionOrders = await _db.ProductionOrders
-                .AsNoTracking()
-                .Select(po => po)
-                .ToListAsync();
-
-            var plannedStocks = new Dictionary<String, List<PlannedWarehouseStock>>();
-
-            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
-            {
-                var body = await reader.ReadToEndAsync();
-                if (body.Length != 0)
-                {
-                    JObject o = JObject.Parse(body);
-                    foreach (string id in new string[] { "p1", "p2", "p3" })
-                    {
-                        JArray a = (JArray)o[id]["PlannedStocks"];
-                        var plannedStock = a.ToObject<List<PlannedWarehouseStock>>();
-                        plannedStocks.Add(id, plannedStock);
-                    }
-                }
-            }
-            var capRequirements = await ExecuteCapacityRequirements(productionOrders, productionOrders, plannedStocks);
-            return Ok(capRequirements);
         }
 
         [NonAction]
