@@ -58,6 +58,10 @@ namespace IBSYS.PPS.Controllers
                         {
                             productionMatrix[i, j] = Convert.ToInt32(req.Amount);
                         }
+                        else
+                        {
+                            productionMatrix[i, j] = productionOrders[i].Orders[j];
+                        }
                     } else
                     {
                         productionMatrix[i, j] = productionOrders[i].Orders[j];
@@ -401,6 +405,11 @@ namespace IBSYS.PPS.Controllers
                     requiredPartsFromWaitingQueue += await ExtractAdditionalKParts(missingParts[i].Item, missingParts[i].Amount, part.MaterialName, bicycleOne, bicycleTwo, bicycleThree);
                 }
 
+                if (part.MaterialName == "K 23")
+                {
+
+                }
+
                 // Logik for Decision between E or N orders and how much
                 var orderPlacement = await SetOrderTypeAndQuantity(part, stockQuantity, requiredParts.Row(position), requiredPartsFromWaitingQueue);
                 orderPlacements.Add(orderPlacement);
@@ -541,8 +550,8 @@ namespace IBSYS.PPS.Controllers
                 }
                 else
                 {
-                    var averageRequirement = req / 5;
-                    lastForDays += Convert.ToInt32(Math.Floor(stockAmount / averageRequirement));
+                    //var averageRequirement = req / 5;
+                    //lastForDays += Convert.ToInt32(Math.Floor(stockAmount / averageRequirement));
                     break;
                 }
             }
