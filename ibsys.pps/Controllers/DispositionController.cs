@@ -29,10 +29,9 @@ namespace IBSYS.PPS.Controllers
             _db = db;
         }
 
-
-        // GET - Disposition of a bicycle
+        // POST - Calculate Disposition of a bicycle
         [HttpPost("{bicycle}")]
-        public async Task<ActionResult> GetDisposition(string bicycle)
+        public async Task<ActionResult> CalculateDisposition(string bicycle)
         {
             var plannedStocks = new List<PlannedWarehouseStock>();
 
@@ -69,8 +68,8 @@ namespace IBSYS.PPS.Controllers
             return Ok(disposition);
         }
 
-        [HttpPost("syncresult/disposition")]
-        public async Task<ActionResult> PostResultForPersistence()
+        [HttpPost("syncresult/disposition/{bicycle}")]
+        public async Task<ActionResult> PostResultForPersistence(string bicycle)
         {
             var productionOrders = new List<BicyclePart>();
 
@@ -89,9 +88,35 @@ namespace IBSYS.PPS.Controllers
             {
                 if (productionOrders != null)
                 {
-                    await _db.AddRangeAsync(productionOrders);
+                    var existingOrders = await _db.DispositionEParts
+                        .Where(o => o.ReferenceToBicycle.Equals(bicycle.ToUpper()))
+                        .Select(o => o)
+                        .ToListAsync();
 
-                    await _db.PlannedWarehouseStocks
+                    var plannedWarehouseStocks = await _db.PlannedWarehouseStocks
+                        .Where(p => p.ReferenceToBicycle.Equals(bicycle.ToUpper()))
+                        .Select(p => p)
+                        .ToListAsync();
+
+                    var updatedOrders = new List<BicyclePart>();
+                    var updatedWarehouseStocks = new List<PlannedWarehouseStock>();
+
+                    if (!existingOrders.Any() && !plannedWarehouseStocks.Any())
+                    {
+                        await _db.AddRangeAsync(productionOrders.Select(po => 
+                            new BicyclePart
+                            {
+                                Name = po.Name,
+                                OrdersInQueueInherit = po.OrdersInQueueInherit,
+                                PlannedWarehouseFollowing = po.PlannedWarehouseFollowing,
+                                WarehouseStockPassed = po.WarehouseStockPassed,
+                                OrdersInQueueOwn = po.OrdersInQueueOwn,
+                                Wip = po.Wip,
+                                Quantity = po.Quantity,
+                                ReferenceToBicycle = productionOrders.Where(po => po.Name.Contains("P")).Select(po => po.Name).FirstOrDefault()
+                            }).ToList());
+
+                        await _db.PlannedWarehouseStocks
                         .AddRangeAsync(productionOrders.Select(po =>
                             new PlannedWarehouseStock
                             {
@@ -100,6 +125,24 @@ namespace IBSYS.PPS.Controllers
                                 ReferenceToBicycle = productionOrders.Where(po => po.Name.Contains("P")).Select(po => po.Name).FirstOrDefault()
                             }
                         ).ToList());
+                    }
+                    else
+                    {
+                        productionOrders.ForEach(o =>
+                        {
+                            var e = existingOrders.Where(p => p.Name.Equals(o.Name)).Select(p => p).FirstOrDefault();
+                            e.PlannedWarehouseFollowing = o.PlannedWarehouseFollowing;
+                            e.Quantity = o.Quantity;
+                            updatedOrders.Add(e);
+
+                            var p = plannedWarehouseStocks.Where(w => w.Part.Equals(o.Name)).Select(w => w).FirstOrDefault();
+                            p.Amount = Convert.ToInt32(o.PlannedWarehouseFollowing);
+                            updatedWarehouseStocks.Add(p);
+                        });
+
+                        _db.UpdateRange(updatedOrders);
+                        _db.UpdateRange(updatedWarehouseStocks);
+                    }
                 }
 
                 await _db.SaveChangesAsync();
@@ -157,23 +200,34 @@ namespace IBSYS.PPS.Controllers
             {
                 if (workingTimes != null)
                 {
-                    workingTimes.ForEach(w =>
-                    {
-                        if ((w.Shift.Equals("1") || w.Shift.Equals("2")) && Convert.ToInt32(w.Overtime) > 1200)
-                        {
-                            throw new Exception("Overtime have to be lesser than 1200!");
-                        }
-                        if (w.Shift.Equals("3") && Convert.ToInt32(w.Overtime) > 0)
-                        {
-                            throw new Exception("In third shift you could not set overtime!");
-                        }
-                        if (Convert.ToInt32(w.Overtime) < 0)
-                        {
-                            throw new Exception("Overtime could not be negative!");
-                        }
-                    });
+                    var existingWorkingTimes = await _db.Workingtimes
+                        .Select(w => w)
+                        .ToListAsync();
 
-                    await _db.AddRangeAsync(workingTimes);
+                    var updatedWorkingTimes = new List<Workingtime>();
+
+                    if (!existingWorkingTimes.Any())
+                    {
+                        workingTimes.ForEach(w =>
+                        {
+                            CheckForConsistency(w);
+                        });
+
+                        await _db.AddRangeAsync(workingTimes);
+                    }
+                    else
+                    {
+                        workingTimes.ForEach(w =>
+                        {
+                            CheckForConsistency(w);
+                            var wt = existingWorkingTimes.Where(t => t.Station.Equals(w.Station)).Select(t => t).FirstOrDefault();
+                            wt.Shift = w.Shift;
+                            wt.Overtime = w.Overtime;
+                            updatedWorkingTimes.Add(wt);
+                        });
+
+                        _db.UpdateRange(updatedWorkingTimes);
+                    }
                 }
 
                 await _db.SaveChangesAsync();
@@ -183,6 +237,25 @@ namespace IBSYS.PPS.Controllers
             catch (Exception ex)
             {
                 return BadRequest($"Something went wrong, {ex.Message}");
+            }
+        }
+
+        [HttpGet("{bicycle}")]
+        public async Task<ActionResult> GetDispositionForBicycle(string bicycle)
+        {
+            var disposition = await _db.DispositionEParts
+                .AsNoTracking()
+                .Where(d => d.ReferenceToBicycle.Equals(bicycle.ToUpper()))
+                .Select(d => d)
+                .ToListAsync();
+
+            if (disposition != null)
+            {
+                return Ok(disposition);
+            }
+            else
+            {
+                return BadRequest("No data found. Please calculate and persist your results!");
             }
         }
 
@@ -460,6 +533,27 @@ namespace IBSYS.PPS.Controllers
             }
 
             return capRequirements;
+        }
+
+        /// <summary>
+        /// Method to check, if the shifts and overtimes don't break their limits
+        /// </summary>
+        /// <param name="w">A single workingtime object</param>
+        [NonAction]
+        public void CheckForConsistency(Workingtime w)
+        {
+            if ((w.Shift.Equals("1") || w.Shift.Equals("2")) && Convert.ToInt32(w.Overtime) > 1200)
+            {
+                throw new Exception("Overtime have to be lesser than 1200!");
+            }
+            if (w.Shift.Equals("3") && Convert.ToInt32(w.Overtime) > 0)
+            {
+                throw new Exception("In third shift you could not set overtime!");
+            }
+            if (Convert.ToInt32(w.Overtime) < 0)
+            {
+                throw new Exception("Overtime could not be negative!");
+            }
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using IBSYS.PPS.Models;
 using IBSYS.PPS.Models.Disposition;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -61,6 +60,17 @@ namespace IBSYS.PPS.Controllers
 
             try
             {
+                var optimizedParts = await _db.OptimizedParts
+                    .Select(op => op)
+                    .ToListAsync();
+
+                var updatedOptimizedParts = new List<OptimizedPart>();
+
+                if (optimizedParts.Any())
+                {
+                    _db.OptimizedParts.RemoveRange(optimizedParts);
+                }
+
                 await _db.AddRangeAsync(optimizedPartHierarchie);
 
                 await _db.SaveChangesAsync();
@@ -70,6 +80,24 @@ namespace IBSYS.PPS.Controllers
             catch (Exception ex)
             {
                 return BadRequest($"Something went wrong, {ex.Message}");
+            }
+        }
+
+        [HttpGet("persisted")]
+        public async Task<ActionResult> GetPersistedOptimizedParts()
+        {
+            var optimizedParts = await _db.OptimizedParts
+                .AsNoTracking()
+                .Select(op => op)
+                .ToListAsync();
+
+            if (optimizedParts.Any())
+            {
+                return Ok(optimizedParts.OrderBy(op => op.Optimized));
+            }
+            else
+            {
+                return BadRequest("No data found. Please calculate your optimized parts first!");
             }
         }
 

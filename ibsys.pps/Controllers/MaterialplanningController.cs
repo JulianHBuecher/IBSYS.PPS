@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace IBSYS.PPS.Controllers
@@ -174,7 +175,42 @@ namespace IBSYS.PPS.Controllers
             {
                 if (orderPlacements != null)
                 {
-                    await _db.AddRangeAsync(orderPlacements);
+                    var placedOrders = await _db.OrdersForK
+                        .Select(o => o)
+                        .ToListAsync();
+
+                    var updatedOrder = new List<OrderForK>();
+                    
+                    if (!placedOrders.Any())
+                    {
+                        await _db.AddRangeAsync(orderPlacements);
+                    }
+                    else
+                    {
+                        orderPlacements.ForEach(o =>
+                        {
+                            var forUpdate = placedOrders.Where(po => po.PartName.Equals(o.PartName)).Select(po => po).FirstOrDefault();
+                            if (forUpdate != null)
+                            {
+                                forUpdate.OrderQuantity = o.OrderQuantity;
+                                forUpdate.OrderModus = o.OrderModus;
+                                updatedOrder.Add(forUpdate);
+                            }
+                            if (!placedOrders.Where(po => po.PartName.Equals(o.PartName)).Select(po => po).Any())
+                            {
+                                updatedOrder.Add(o);
+                            }
+                        });
+
+                        var partsForDeletion = placedOrders.Except(updatedOrder).ToList();
+
+                        if (partsForDeletion.Count() != 0)
+                        {
+                            _db.RemoveRange(partsForDeletion);
+                        }
+
+                        _db.UpdateRange(updatedOrder);
+                    }
                 }
 
                 await _db.SaveChangesAsync();
@@ -184,6 +220,45 @@ namespace IBSYS.PPS.Controllers
             catch (Exception ex)
             {
                 return BadRequest($"Something went wrong, {ex.Message}");
+            }
+        }
+
+        [HttpGet("placedorders")]
+        public async Task<ActionResult> GetPlacedOrders()
+        {
+            var placedOrders = await _db.OrdersForK
+                .AsNoTracking()
+                .Select(o => o)
+                .ToListAsync();
+
+            if (placedOrders.Any())
+            {
+                return Ok(placedOrders);
+            }
+            else
+            {
+                return BadRequest("No data found. Please calculate and persist your results!");
+            }
+        }
+
+        [HttpGet("kpart/{partnumber}")]
+        public async Task<ActionResult> GetKPartByNumber(string partnumber)
+        {
+            var kParts = await _db.PurchasedItems
+                .AsNoTracking()
+                .Select(p => p)
+                .ToListAsync();
+
+            var kPart = kParts.Where(p => partnumber.Equals(Regex.Match(p.ItemNumber, @"\d+").Value))
+                .Select(p => p).FirstOrDefault();
+
+            if (kPart != null)
+            {
+                return Ok(kPart);
+            }
+            else
+            {
+                return NotFound("No purchasable item with this number found!");
             }
         }
 

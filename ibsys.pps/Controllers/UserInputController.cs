@@ -1,11 +1,13 @@
 ﻿using IBSYS.PPS.Models;
 using IBSYS.PPS.Models.Input;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -42,7 +44,25 @@ namespace IBSYS.PPS.Controllers
 
             try
             {
-                await _db.AddRangeAsync(productionOrders);
+                var existingOrders = await _db.ProductionOrders
+                    .AsNoTracking()
+                    .Select(o => o)
+                    .ToListAsync();
+
+                if (!existingOrders.Any())
+                {
+                    await _db.AddRangeAsync(productionOrders);
+                }
+                else
+                {
+                    productionOrders.ForEach(o =>
+                    {
+                        existingOrders.Where(p => p.Bicycle.Equals(o.Bicycle))
+                            .Select(p => p).FirstOrDefault().Orders = o.Orders;
+                    });
+
+                    _db.UpdateRange(existingOrders);
+                }
             
                 await _db.SaveChangesAsync();
                 
@@ -72,7 +92,33 @@ namespace IBSYS.PPS.Controllers
             
             try
             {
-                await _db.AddRangeAsync(sellDirectOrders);
+                var existingOrders = await _db.SellDirectItems
+                    .AsNoTracking()
+                    .Select(o => o)
+                    .ToListAsync();
+
+                var updatedOrders = new List<SellDirectItem>();
+
+                if (!existingOrders.Any())
+                {
+                    await _db.AddRangeAsync(sellDirectOrders);
+                }
+                else
+                {
+                    sellDirectOrders.ForEach(o =>
+                    {
+                        var e = existingOrders.Where(p => p.Article.Equals(o.Article))
+                            .Select(o => o).FirstOrDefault();
+                        
+                        e.Quantity = o.Quantity;
+                        e.Penalty = o.Penalty;
+                        e.Price = o.Price;
+
+                        updatedOrders.Add(e);
+                    });
+
+                    _db.UpdateRange(updatedOrders);
+                }
 
                 await _db.SaveChangesAsync();
 
@@ -81,6 +127,42 @@ namespace IBSYS.PPS.Controllers
             catch (Exception ex)
             {
                 return BadRequest($"Something went wrong, {ex.Message}");
+            }
+        }
+        
+        [HttpGet("productionorder")]
+        public async Task<ActionResult> GetProductionOrders()
+        {
+            var productionOrders = await _db.ProductionOrders
+                .AsNoTracking()
+                .Select(o => o)
+                .ToListAsync();
+
+            if (productionOrders.Any())
+            {
+                return Ok(productionOrders);
+            }
+            else
+            {
+                return BadRequest("No data found. Please insert your program!");
+            }
+        }
+
+        [HttpGet("selldirect")]
+        public async Task<ActionResult> GetSellDirectOrders()
+        {
+            var sellDirectOrders = await _db.SellDirectItems
+                .AsNoTracking()
+                .Select(s => s)
+                .ToListAsync();
+
+            if (sellDirectOrders.Any())
+            {
+                return Ok(sellDirectOrders);
+            }
+            else
+            {
+                return BadRequest("No data found. Please insert your program!");
             }
         }
     }

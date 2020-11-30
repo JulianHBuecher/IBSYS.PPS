@@ -28,6 +28,9 @@ namespace IBSYS.PPS.Models.Disposition
         [JsonProperty("Work In Progress")]
         public string Wip { get; set; }
         public string Quantity { get; set; }
+        [XmlIgnore]
+        [JsonIgnore]
+        public string ReferenceToBicycle { get; set; }
     }
 
     public class OptimizedPart : BicyclePart
