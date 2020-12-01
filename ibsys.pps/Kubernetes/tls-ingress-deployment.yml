@@ -7,7 +7,7 @@ metadata:
     annotations:
       kubernetes.io/ingress.class: nginx
       cert-manager.io/cluster-issuer: letsencrypt-prod
-      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      nginx.ingress.kubernetes.io/rewrite-target: /$1
       nginx.ingress.kubernetes.io/use-regex: "true"
       nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
       service.beta.kubernetes.io/do-loadbalancer-enable-proxy-protocol: "true"
@@ -23,18 +23,30 @@ spec:
       http:
         paths:
         - backend:
+            serviceName: pps-frontend
+            servicePort: 80
+          path: /(.*)
+        - backend:
             serviceName: kibana
             servicePort: 80
-          path: /kibana(/|$)(.*)
+          path: /kibana/(.*)
         - backend:
             serviceName: pps-backend
             servicePort: 80
-          path: /backend(/|$)(.*)
+          path: /backend/(.*)
         - backend:
             serviceName: pps-backend
             servicePort: 80
-          path: /(.*)(swagger/.*)
+          path: /(swagger/.*)
         # - backend:
-        #     serviceName: frontend
+        #     serviceName: kibana
         #     servicePort: 80
-        #   path: /(.*)
+        #   path: /kibana(/|$)(.*)
+        # - backend:
+        #     serviceName: pps-backend
+        #     servicePort: 80
+        #   path: /backend(/|$)(.*)
+        # - backend:
+        #     serviceName: pps-backend
+        #     servicePort: 80
+        #   path: /(.*)(swagger/.*)

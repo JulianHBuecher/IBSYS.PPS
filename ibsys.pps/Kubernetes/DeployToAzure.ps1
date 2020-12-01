@@ -63,6 +63,7 @@ function Install() {
     Write-Output "`n`nInstallation of Applications: "
     
     kubectl apply -f .\pps-deployment.yml
+    kubectl apply -f .\gui-deployment.yml
     kubectl apply -f .\elasticsearch-kibana-deployment.yml
     
     Start-Sleep -s 5
