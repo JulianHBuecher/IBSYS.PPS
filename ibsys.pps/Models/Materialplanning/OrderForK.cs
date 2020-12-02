@@ -20,5 +20,11 @@ namespace IBSYS.PPS.Models.Materialplanning
         // Entity with Amount of Parts from Queue
         [JsonProperty("Required Parts out of Queue")]
         public int AdditionalParts { get; set; }
+        [JsonProperty("Actual Stock")]
+        public int Stock { get; set; }
+        [JsonProperty("Gross Requirements for next Periods")]
+        public double[] Requirements { get; set; }
+        [JsonProperty("Order Quotient")]
+        public double OrderQuotient { get; set; }
     }
 }

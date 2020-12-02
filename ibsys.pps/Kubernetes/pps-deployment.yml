@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: pps
-        image: ibsystwocontainerregistry.azurecr.io/pps-backend-net5:v3
+        image: ibsystwocontainerregistry.azurecr.io/pps-backend-net5:v4
         env:
         - name: ASPNETCORE_URLS
           value: http://+

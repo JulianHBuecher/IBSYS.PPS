@@ -583,6 +583,8 @@ namespace IBSYS.PPS.Controllers
             var orderAmount = 0;
             var orderType = 0;
 
+            var orderQuotient = stockLasts / (maxDeliveryDuration * 5);
+
             if (stockLasts < daysUntilNextDelivery)
             {
                 // Fast Order
@@ -596,7 +598,7 @@ namespace IBSYS.PPS.Controllers
             else
             {
                 // Normal Order
-                if (stockLasts < daysUntilNextDelivery + 5)
+                if (stockLasts < daysUntilNextDelivery + 5 || orderQuotient < 2.5)
                 {
                     orderType = 5;
                     orderAmount = discountQuantity;
@@ -607,7 +609,10 @@ namespace IBSYS.PPS.Controllers
                 PartName = kPart.ItemNumber,
                 OrderQuantity = orderAmount.ToString(),
                 OrderModus = orderType,
-                AdditionalParts = partsFromQueue
+                AdditionalParts = partsFromQueue,
+                Stock = stock,
+                Requirements = accordingRequirements.AsArray(),
+                OrderQuotient = orderQuotient
             };
         }
         

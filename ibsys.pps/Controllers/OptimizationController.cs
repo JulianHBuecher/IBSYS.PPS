@@ -34,7 +34,9 @@ namespace IBSYS.PPS.Controllers
             {
                 var optimizedProduction = await OptimizeProductionOrder();
                 
-                return Ok(optimizedProduction);
+                return Ok(optimizedProduction
+                    .Where(o => Convert.ToInt32(o.Quantity) > 0)
+                    .Select(o => o));
             }
             catch (Exception ex)
             {
