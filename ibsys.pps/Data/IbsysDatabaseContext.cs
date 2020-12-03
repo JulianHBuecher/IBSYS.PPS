@@ -39,6 +39,7 @@ namespace IBSYS.PPS.Models
         public DbSet<BicyclePart> DispositionEParts { get; set; }
         public DbSet<Workingtime> Workingtimes { get; set; }
         public DbSet<OptimizedPart> OptimizedParts { get; set; }
+        public DbSet<Andler> AndlerValues { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

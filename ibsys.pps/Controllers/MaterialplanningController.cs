@@ -44,31 +44,7 @@ namespace IBSYS.PPS.Controllers
 
             var changedRequirementsTupel = changedRequirements.Select(d => (Bicycle: d.Name, Amount: d.Quantity)).ToList();
 
-            double[,] productionMatrix = new double[3,4];
-
-            // If required parts in dispositions are changed
-            // They will be corrected in the production matrix
-            for (var i = 0; i < productionOrders.Count(); i++)
-            {
-                for (var j = 0; j < productionOrders[i].Orders.Count(); j++)
-                {
-                    if (j is 0)
-                    {
-                        var req = changedRequirementsTupel.Where(c => c.Bicycle.Contains("P" + (i + 1).ToString())).Select(c => c).FirstOrDefault();
-                        if (Convert.ToDouble(req.Amount) != productionOrders[i].Orders[j]) 
-                        {
-                            productionMatrix[i, j] = Convert.ToInt32(req.Amount);
-                        }
-                        else
-                        {
-                            productionMatrix[i, j] = productionOrders[i].Orders[j];
-                        }
-                    } else
-                    {
-                        productionMatrix[i, j] = productionOrders[i].Orders[j];
-                    }
-                }
-            }
+            var productionMatrix = CheckForChangedProductionOrders(productionOrders, changedRequirementsTupel);
 
             // Extract bicycles per number for filtering the needed materials
             var bicycleParts = await _db.BillOfMaterials
@@ -77,65 +53,12 @@ namespace IBSYS.PPS.Controllers
                 .Select(b => b)
                 .ToListAsync();
 
-            foreach (var bicycle in bicycleParts)
-            {
-                foreach (var material in bicycle.RequiredMaterials)
-                {
-                    material.MaterialNeeded = await GetNestedMaterials(material);
-                }
-            }
+            var (p1, p2, p3) = await ExtractBicycles(bicycleParts);
 
-            var p1 = new BillOfMaterial();
-            var p2 = new BillOfMaterial();
-            var p3 = new BillOfMaterial();
+            var completedPartList = await CreateCompleteMaterialListForBicycle(p1, p2, p3);
 
-            var extractedBicyclePOne = new List<Material>();
-            var extractedBicyclePTwo = new List<Material>();
-            var extractedBicyclePThree = new List<Material>();
-
-            var counter = 0;
-
-            foreach (var bicycle in new List<BillOfMaterial> { p1, p2, p3 })
-            {
-                bicycle.ProductName = bicycleParts[counter].ProductName;
-                bicycle.RequiredMaterials = bicycleParts[counter].RequiredMaterials;
-                counter++;
-            }
-
-            foreach (var material in p1.RequiredMaterials)
-            {
-                var filteredPart = await FilterNestedMaterialsByName("K", material);
-                extractedBicyclePOne.AddRange(filteredPart);
-            }
-            foreach (var material in p2.RequiredMaterials)
-            {
-                var filteredPart = await FilterNestedMaterialsByName("K", material);
-                extractedBicyclePTwo.AddRange(filteredPart);
-            }
-            foreach (var material in p3.RequiredMaterials)
-            {
-                var filteredPart = await FilterNestedMaterialsByName("K", material);
-                extractedBicyclePThree.AddRange(filteredPart);
-            }
-
-            var summedPartsPOne = SumFilteredMaterials(extractedBicyclePOne);
-            var summedPartsPTwo = SumFilteredMaterials(extractedBicyclePTwo);
-            var summedPartsPThree = SumFilteredMaterials(extractedBicyclePThree);
-
-            var completedPartsForP1 = InsertNotNeededMaterials(new List<Material>(summedPartsPOne), new List<Material>(summedPartsPTwo), new List<Material>(summedPartsPThree));
-            var completedPartsForP2 = InsertNotNeededMaterials(new List<Material>(summedPartsPTwo), new List<Material>(summedPartsPOne), new List<Material>(summedPartsPThree));
-            var completedPartsForP3 = InsertNotNeededMaterials(new List<Material>(summedPartsPThree), new List<Material>(summedPartsPOne), new List<Material>(summedPartsPTwo));
-
-            // Conversion of Summed Parts To Vectors
-            var neededMaterialVecP1 = Vector<Double>.Build
-                .DenseOfEnumerable(completedPartsForP1.Select(p => Convert.ToDouble(p.QuantityNeeded)));
-            var neededMaterialVecP2 = Vector<Double>.Build
-                .DenseOfEnumerable(completedPartsForP2.Select(p => Convert.ToDouble(p.QuantityNeeded)));
-            var neededMaterialVecP3 = Vector<Double>.Build
-                .DenseOfEnumerable(completedPartsForP3.Select(p => Convert.ToDouble(p.QuantityNeeded)));
-
-            var neededMaterialMatrix = Matrix<Double>.Build.DenseOfColumnVectors(neededMaterialVecP1, neededMaterialVecP2, neededMaterialVecP3);
-
+            var neededMaterialMatrix = await CreateNeededMaterialMatrix(p1, p2, p3);
+            
             // Matrix Multiplikation for Calculation of required parts
             var productionOrderMatrix = Matrix<Double>.Build.DenseOfArray(productionMatrix);
 
@@ -143,7 +66,7 @@ namespace IBSYS.PPS.Controllers
 
             try
             {
-                var orders = await PlaceOrder(calculatedNewParts, completedPartsForP1, p1, p2, p3);
+                var orders = await PlaceOrder(calculatedNewParts, completedPartList, p1, p2, p3);
 
                 return Ok(orders
                     .Where(o => (o.OrderModus != 0 && Convert.ToInt32(o.OrderQuantity) != 0))
@@ -228,6 +151,7 @@ namespace IBSYS.PPS.Controllers
         {
             var placedOrders = await _db.OrdersForK
                 .AsNoTracking()
+                .Include(o => o.OptimalOrderQuantity)
                 .Select(o => o)
                 .ToListAsync();
 
@@ -244,17 +168,69 @@ namespace IBSYS.PPS.Controllers
         [HttpGet("kpart/{partnumber}")]
         public async Task<ActionResult> GetKPartByNumber(string partnumber)
         {
-            var kParts = await _db.PurchasedItems
+            var kPart = await _db.PurchasedItems
                 .AsNoTracking()
+                .Where(p => p.ItemNumber.Equals($"K {partnumber}"))
                 .Select(p => p)
+                .FirstOrDefaultAsync();
+
+            var material = await _db.Materials
+                .AsNoTracking()
+                .Where(m => m.MaterialName.Equals($"K {partnumber}"))
+                .Select(m => m)
+                .FirstOrDefaultAsync();
+
+            var productionOrders = await _db.ProductionOrders
+                .AsNoTracking()
+                .Select(po => po)
                 .ToListAsync();
 
-            var kPart = kParts.Where(p => partnumber.Equals(Regex.Match(p.ItemNumber, @"\d+").Value))
-                .Select(p => p).FirstOrDefault();
+            var changedRequirements = await _db.DispositionEParts
+                .AsNoTracking()
+                .Where(d => d.Name.Equals("P1") || d.Name.Equals("P2") || d.Name.Equals("P3"))
+                .Select(d => new { d.Name, d.Quantity })
+                .ToListAsync();
 
-            if (kPart != null)
+            var changedRequirementsTupel = changedRequirements.Select(d => (Bicycle: d.Name, Amount: d.Quantity)).ToList();
+
+            var productionMatrix = CheckForChangedProductionOrders(productionOrders, changedRequirementsTupel);
+
+            // Extract bicycles per number for filtering the needed materials
+            var bicycleParts = await _db.BillOfMaterials
+                .AsNoTracking()
+                .Include(b => b.RequiredMaterials)
+                .Select(b => b)
+                .ToListAsync();
+
+            var (p1, p2, p3) = await ExtractBicycles(bicycleParts);
+
+            var completedPartList = await CreateCompleteMaterialListForBicycle(p1, p2, p3);
+
+            var neededMaterialMatrix = await CreateNeededMaterialMatrix(p1, p2, p3);
+
+            // Matrix Multiplikation for Calculation of required parts
+            var productionOrderMatrix = Matrix<Double>.Build.DenseOfArray(productionMatrix);
+
+            var calculatedNewParts = neededMaterialMatrix.Multiply(productionOrderMatrix);
+
+            var orders = await PlaceOrder(calculatedNewParts, completedPartList, p1, p2, p3);
+
+            var order = orders.Where(o => o.PartName.Equals($"K {partnumber}")).Select(o => o).FirstOrDefault();
+
+            if (order != null)
             {
-                return Ok(kPart);
+                return Ok(new ExtendedKPart 
+                {
+                    ItemNumber = order.PartName,
+                    Description = kPart.Description,
+                    DiscountQuantity = kPart.DiscountQuantity,
+                    OrderCosts = kPart.OrderCosts,
+                    AdditionalParts = order.AdditionalParts,
+                    Stock = order.Stock,
+                    Requirements = order.Requirements,
+                    OrderQuotient = order.OrderQuotient,
+                    OptimalOrderQuantity = order.OptimalOrderQuantity
+                });
             }
             else
             {
@@ -480,11 +456,6 @@ namespace IBSYS.PPS.Controllers
                     requiredPartsFromWaitingQueue += await ExtractAdditionalKParts(missingParts[i].Item, missingParts[i].Amount, part.MaterialName, bicycleOne, bicycleTwo, bicycleThree);
                 }
 
-                if (part.MaterialName == "K 23")
-                {
-
-                }
-
                 // Logik for Decision between E or N orders and how much
                 var orderPlacement = await SetOrderTypeAndQuantity(part, stockQuantity, requiredParts.Row(position), requiredPartsFromWaitingQueue);
                 orderPlacements.Add(orderPlacement);
@@ -568,6 +539,11 @@ namespace IBSYS.PPS.Controllers
                 .Select(f => f.Amount)
                 .FirstOrDefaultAsync();
 
+            var stockValue = await _db.StockValuesFromLastPeriod
+                .AsNoTracking()
+                .Select(s => Convert.ToDouble(s.Stockvalue.Replace(",", ".")))
+                .SumAsync();
+
             var deliveryDuration = kPart.ProcureLeadTime;
             var deviation = kPart.Deviation;
 
@@ -585,7 +561,7 @@ namespace IBSYS.PPS.Controllers
 
             var orderQuotient = stockLasts / (maxDeliveryDuration * 5);
 
-            if (stockLasts < daysUntilNextDelivery)
+            if (orderQuotient < 1.0)
             {
                 // Fast Order
                 var daysTillFastDeliveryAvailable = Math.Ceiling(deliveryDuration * 2.5);
@@ -598,12 +574,20 @@ namespace IBSYS.PPS.Controllers
             else
             {
                 // Normal Order
-                if (stockLasts < daysUntilNextDelivery + 5 || orderQuotient < 2.5)
+                if (orderQuotient is (>= 1.0 and < 2.0) or < 2.5)
                 {
                     orderType = 5;
                     orderAmount = discountQuantity;
                 }
             }
+
+            var optimalOrderQuantity = CalculateAndlerFormula(
+                    (int)Math.Round((decimal)(accordingRequirements.Sum() / 4 * 53) / 10) * 10, 
+                    kPart.OrderCosts, 
+                    kPart.ItemValue,
+                    orderType,
+                    stockValue);
+
             return new OrderForK
             {
                 PartName = kPart.ItemNumber,
@@ -612,7 +596,8 @@ namespace IBSYS.PPS.Controllers
                 AdditionalParts = partsFromQueue,
                 Stock = stock,
                 Requirements = accordingRequirements.AsArray(),
-                OrderQuotient = orderQuotient
+                OrderQuotient = orderQuotient,
+                OptimalOrderQuantity = optimalOrderQuantity
             };
         }
         
@@ -636,6 +621,171 @@ namespace IBSYS.PPS.Controllers
                 }
             }
             return lastForDays;
+        }
+    
+        [NonAction]
+        public Andler CalculateAndlerFormula(int jahresverbrauch, double bestellfixeKosten, 
+            double variableKosten, int orderType, double lagerkosten, 
+            double lagerkostensatz = 30.0, int konstante = 200)
+        {
+            if (orderType == 4)
+            {
+                bestellfixeKosten *= 10;
+            }
+
+            if (lagerkosten > 250000.00)
+            {
+                var additionalLagerkosten = (5000 * 53) / lagerkosten;
+                lagerkostensatz += additionalLagerkosten;
+            }
+
+            var result = Math.Sqrt((konstante * jahresverbrauch * bestellfixeKosten) / (variableKosten * lagerkostensatz));
+            result = (double)Math.Round((decimal)result / 10) * 10;
+            return new Andler
+            {
+                Konstante = konstante,
+                Jahresverbrauch = jahresverbrauch,
+                BestellfixeKosten = bestellfixeKosten,
+                VariableBestellkosten = variableKosten,
+                Lagerkostensatz = lagerkostensatz,
+                Lagerwert = lagerkosten,
+                Result = result
+            };
+        }
+    
+        [NonAction]
+        public double[,] CheckForChangedProductionOrders(List<ProductionOrder> productionOrders, List<(string Bicycle, string Amount)> changedRequirementsTupel)
+        {
+            double[,] productionMatrix = new double[3, 4];
+
+            // If required parts in dispositions are changed
+            // They will be corrected in the production matrix
+            for (var i = 0; i < productionOrders.Count(); i++)
+            {
+                for (var j = 0; j < productionOrders[i].Orders.Count(); j++)
+                {
+                    if (j is 0)
+                    {
+                        var req = changedRequirementsTupel.Where(c => c.Bicycle.Contains("P" + (i + 1).ToString())).Select(c => c).FirstOrDefault();
+                        if (Convert.ToDouble(req.Amount) != productionOrders[i].Orders[j])
+                        {
+                            productionMatrix[i, j] = Convert.ToInt32(req.Amount);
+                        }
+                        else
+                        {
+                            productionMatrix[i, j] = productionOrders[i].Orders[j];
+                        }
+                    }
+                    else
+                    {
+                        productionMatrix[i, j] = productionOrders[i].Orders[j];
+                    }
+                }
+            }
+            return productionMatrix;
+        }
+    
+        [NonAction]
+        public async Task<(BillOfMaterial, BillOfMaterial, BillOfMaterial)> ExtractBicycles(List<BillOfMaterial> bicycleParts)
+        {
+            var p1 = new BillOfMaterial();
+            var p2 = new BillOfMaterial();
+            var p3 = new BillOfMaterial();
+         
+            foreach (var bicycle in bicycleParts)
+            {
+                foreach (var material in bicycle.RequiredMaterials)
+                {
+                    material.MaterialNeeded = await GetNestedMaterials(material);
+                }
+            }
+
+            var counter = 0;
+
+            foreach (var bicycle in new List<BillOfMaterial> { p1, p2, p3 })
+            {
+                bicycle.ProductName = bicycleParts[counter].ProductName;
+                bicycle.RequiredMaterials = bicycleParts[counter].RequiredMaterials;
+                counter++;
+            }
+
+            return (p1, p2, p3);
+        }
+    
+        [NonAction]
+        public async Task<Matrix<double>> CreateNeededMaterialMatrix(BillOfMaterial p1, BillOfMaterial p2, BillOfMaterial p3)
+        {
+            var extractedBicyclePOne = new List<Material>();
+            var extractedBicyclePTwo = new List<Material>();
+            var extractedBicyclePThree = new List<Material>();
+
+            foreach (var material in p1.RequiredMaterials)
+            {
+                var filteredPart = await FilterNestedMaterialsByName("K", material);
+                extractedBicyclePOne.AddRange(filteredPart);
+            }
+            foreach (var material in p2.RequiredMaterials)
+            {
+                var filteredPart = await FilterNestedMaterialsByName("K", material);
+                extractedBicyclePTwo.AddRange(filteredPart);
+            }
+            foreach (var material in p3.RequiredMaterials)
+            {
+                var filteredPart = await FilterNestedMaterialsByName("K", material);
+                extractedBicyclePThree.AddRange(filteredPart);
+            }
+
+            var summedPartsPOne = SumFilteredMaterials(extractedBicyclePOne);
+            var summedPartsPTwo = SumFilteredMaterials(extractedBicyclePTwo);
+            var summedPartsPThree = SumFilteredMaterials(extractedBicyclePThree);
+
+            var completedPartsForP1 = InsertNotNeededMaterials(new List<Material>(summedPartsPOne), new List<Material>(summedPartsPTwo), new List<Material>(summedPartsPThree));
+            var completedPartsForP2 = InsertNotNeededMaterials(new List<Material>(summedPartsPTwo), new List<Material>(summedPartsPOne), new List<Material>(summedPartsPThree));
+            var completedPartsForP3 = InsertNotNeededMaterials(new List<Material>(summedPartsPThree), new List<Material>(summedPartsPOne), new List<Material>(summedPartsPTwo));
+
+            // Conversion of Summed Parts To Vectors
+            var neededMaterialVecP1 = Vector<Double>.Build
+                .DenseOfEnumerable(completedPartsForP1.Select(p => Convert.ToDouble(p.QuantityNeeded)));
+            var neededMaterialVecP2 = Vector<Double>.Build
+                .DenseOfEnumerable(completedPartsForP2.Select(p => Convert.ToDouble(p.QuantityNeeded)));
+            var neededMaterialVecP3 = Vector<Double>.Build
+                .DenseOfEnumerable(completedPartsForP3.Select(p => Convert.ToDouble(p.QuantityNeeded)));
+
+            var neededMaterialMatrix = Matrix<Double>.Build.DenseOfColumnVectors(neededMaterialVecP1, neededMaterialVecP2, neededMaterialVecP3);
+
+            return neededMaterialMatrix;
+        }
+    
+        [NonAction]
+        public async Task<List<Material>> CreateCompleteMaterialListForBicycle(BillOfMaterial p1, BillOfMaterial p2, BillOfMaterial p3)
+        {
+            var extractedBicyclePOne = new List<Material>();
+            var extractedBicyclePTwo = new List<Material>();
+            var extractedBicyclePThree = new List<Material>();
+
+            foreach (var material in p1.RequiredMaterials)
+            {
+                var filteredPart = await FilterNestedMaterialsByName("K", material);
+                extractedBicyclePOne.AddRange(filteredPart);
+            }
+            foreach (var material in p2.RequiredMaterials)
+            {
+                var filteredPart = await FilterNestedMaterialsByName("K", material);
+                extractedBicyclePTwo.AddRange(filteredPart);
+            }
+            foreach (var material in p3.RequiredMaterials)
+            {
+                var filteredPart = await FilterNestedMaterialsByName("K", material);
+                extractedBicyclePThree.AddRange(filteredPart);
+            }
+
+            var summedPartsPOne = SumFilteredMaterials(extractedBicyclePOne);
+            var summedPartsPTwo = SumFilteredMaterials(extractedBicyclePTwo);
+            var summedPartsPThree = SumFilteredMaterials(extractedBicyclePThree);
+
+            var completedParts = InsertNotNeededMaterials(new List<Material>(summedPartsPOne), new List<Material>(summedPartsPTwo), new List<Material>(summedPartsPThree));
+
+            return completedParts;
         }
     }
 }

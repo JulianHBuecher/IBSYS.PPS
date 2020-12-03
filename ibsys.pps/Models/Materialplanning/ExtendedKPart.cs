@@ -1,23 +1,20 @@
 ﻿using Newtonsoft.Json;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Xml.Serialization;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace IBSYS.PPS.Models.Materialplanning
 {
-    public class OrderForK
+    public class ExtendedKPart
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        [JsonIgnore]
-        [XmlIgnore]
-        public int Id { get; set; }
-        public string PartName { get; set; }
-        public string OrderQuantity { get; set; }
-        // Status 4 - Eil-Bestellung
-        // Status 5 - Normal-Bestellung
-        public int OrderModus { get; set; }
-        // Entity with Amount of Parts from Queue
+        [JsonProperty("Item Number")]
+        public string ItemNumber { get; set; }
+        public string Description { get; set; }
+        [JsonProperty("Discount Quantity")]
+        public int DiscountQuantity { get; set;}
+        [JsonProperty("Order Costs")]
+        public double OrderCosts { get; set; }
         [JsonProperty("Required Parts out of Queue")]
         public int AdditionalParts { get; set; }
         [JsonProperty("Actual Stock")]

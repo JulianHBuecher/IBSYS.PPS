@@ -158,26 +158,34 @@ namespace IBSYS.PPS.Controllers
         [HttpGet("capacity")]
         public async Task<ActionResult> GetCapacityRequirements()
         {
-            var productionOrders = await _db.ProductionOrders
-                .AsNoTracking()
-                .Select(po => po)
-                .ToListAsync();
-
-            var plannedStocks = new Dictionary<String, List<PlannedWarehouseStock>>();
-
-            foreach (var id in new string[] { "p1", "p2", "p3" })
+            try
             {
-                var plannedStock = await _db.PlannedWarehouseStocks
+                var productionOrders = await _db.ProductionOrders
                     .AsNoTracking()
-                    .Where(pw => pw.ReferenceToBicycle.ToLower().Equals(id))
-                    .Select(pw => pw)
+                    .Select(po => po)
                     .ToListAsync();
 
-                plannedStocks.Add(id, plannedStock);
-            }
+                var plannedStocks = new Dictionary<String, List<PlannedWarehouseStock>>();
 
-            var capRequirements = await ExecuteCapacityRequirements(productionOrders, productionOrders, plannedStocks);
-            return Ok(capRequirements);
+                foreach (var id in new string[] { "p1", "p2", "p3" })
+                {
+                    var plannedStock = await _db.PlannedWarehouseStocks
+                        .AsNoTracking()
+                        .Where(pw => pw.ReferenceToBicycle.ToLower().Equals(id))
+                        .Select(pw => pw)
+                        .ToListAsync();
+
+                    plannedStocks.Add(id, plannedStock);
+                }
+
+                var capRequirements = await ExecuteCapacityRequirements(productionOrders, productionOrders, plannedStocks);
+                
+                return Ok(capRequirements.Select(c => c.Value).OrderBy(c => c.Workstation));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Something went wrong, {ex.Message}!");
+            }
         }
 
         [HttpPost("syncresult/capacityplanning")]
@@ -428,7 +436,7 @@ namespace IBSYS.PPS.Controllers
         }
 
         [NonAction]
-        public async Task<Dictionary<int, int>> ExecuteCapacityRequirements(List<ProductionOrder> salesOrders, List<ProductionOrder> forecasts, Dictionary<String, List<PlannedWarehouseStock>> plannedWarehouseStocks)
+        public async Task<Dictionary<int, CapacityRequirementExtended>> ExecuteCapacityRequirements(List<ProductionOrder> salesOrders, List<ProductionOrder> forecasts, Dictionary<String, List<PlannedWarehouseStock>> plannedWarehouseStocks)
         {
             #region Capacity Data
             Dictionary<String, List<CapacityRequirement>> capData = new Dictionary<String, List<CapacityRequirement>>();
@@ -465,7 +473,7 @@ namespace IBSYS.PPS.Controllers
             #endregion
 
             var capRequirements = new Dictionary<int, int>();
-            var setupTimes = new Dictionary<int, int>();
+            var setupTimes = new Dictionary<int, (int setupEvents, int setupTime)>();
             foreach (KeyValuePair<String, List<PlannedWarehouseStock>> pair in plannedWarehouseStocks)
             {
                 var dispositionData = ExecuteDisposition(pair.Key,
@@ -489,27 +497,30 @@ namespace IBSYS.PPS.Controllers
                             capRequirements.Add(requirement.workStation, requirement.processTime * quantity);
                         }
                         int setupTime;
-                        if (setupTimes.TryGetValue(requirement.workStation, out setupTime))
+                        if (setupTimes.TryGetValue(requirement.workStation, out (int setupEvent, int setupTime) setup))
                         {
-                            setupTime = (setupTime + requirement.setupTime) / 2;
+                            setupTime = (setup.setupTime + requirement.setupTime) / 2;
                         }
                         else
                         {
-                            setupTimes.Add(requirement.workStation, requirement.setupTime);
+                            setupTimes.Add(requirement.workStation, (quantity, requirement.setupTime));
                         }
                     }
                 }
             }
 
             List<int> workstations = new List<int>(capRequirements.Keys);
+
+            var requirements = new Dictionary<int, CapacityRequirementExtended>();
+
             foreach (var workstation in workstations)
             {
                 var setupEvents = await _db.SetupEvents.AsNoTracking()
-                    .Where(setupEvent => setupEvent.WorkplaceId.Equals(workstation))
+                    .Where(setupEvent => setupEvent.WorkplaceId.Equals(workstation.ToString()))
                     .Select(setupEvent => setupEvent.NumberOfSetupEvents)
                     .FirstOrDefaultAsync();
 
-                capRequirements[workstation] += setupEvents * setupTimes[workstation];
+                capRequirements[workstation] += setupEvents * setupTimes[workstation].setupTime;
 
                 var waitinglistWorkstations = await _db.WaitinglistWorkstations.AsNoTracking()
                     .Where(ws => Convert.ToInt32(ws.WorkplaceId).Equals(workstation) && ws.TimeNeed > 0)
@@ -530,9 +541,18 @@ namespace IBSYS.PPS.Controllers
                 {
                     capRequirements[workstation] += value;
                 }
-            }
 
-            return capRequirements;
+                requirements.Add(workstation, new CapacityRequirementExtended
+                {
+                    Workstation = workstation,
+                    TimeFromWaitinglist = waitinglistWorkstations,
+                    TimeFromWiP = workInProgress,
+                    SetupEvents = setupEvents,
+                    SetupTime = setupTimes[workstation].setupTime,
+                    RequiredCapacity = capRequirements[workstation]
+                });
+            }
+            return requirements;
         }
 
         /// <summary>
