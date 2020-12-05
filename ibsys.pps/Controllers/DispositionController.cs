@@ -52,6 +52,19 @@ namespace IBSYS.PPS.Controllers
                 .Select(po => po.Orders)
                 .SingleOrDefaultAsync();
 
+            var salesOrders = await _db.Forecasts
+                .AsNoTracking()
+                .Select(f => f)
+                .FirstOrDefaultAsync();
+
+            var salesOrder = bicycle switch
+            {
+                "P1" => Convert.ToInt32(salesOrders.P1),
+                "P2" => Convert.ToInt32(salesOrders.P2),
+                "P3" => Convert.ToInt32(salesOrders.P3),
+                _ => Convert.ToInt32(salesOrders.P1)
+            };
+
             var directSalesOrder = await _db.SellDirectItems
                 .AsNoTracking()
                 .Where(ds => ds.Article.Equals(Regex.Match(bicycle, @"\d+").Value))
@@ -62,7 +75,7 @@ namespace IBSYS.PPS.Controllers
 
             var disposition = await ExecuteDisposition(bicycle,
                 productionOrders,
-                (Convert.ToInt32(productionOrders[0]) + Convert.ToInt32(directSalesOrder)), 
+                (salesOrder + Convert.ToInt32(directSalesOrder)), 
                 plannedStocks);
 
             return Ok(disposition);
@@ -160,25 +173,12 @@ namespace IBSYS.PPS.Controllers
         {
             try
             {
-                var productionOrders = await _db.ProductionOrders
+                var disposition = await _db.DispositionEParts
                     .AsNoTracking()
-                    .Select(po => po)
+                    .Select(d => d)
                     .ToListAsync();
-
-                var plannedStocks = new Dictionary<String, List<PlannedWarehouseStock>>();
-
-                foreach (var id in new string[] { "p1", "p2", "p3" })
-                {
-                    var plannedStock = await _db.PlannedWarehouseStocks
-                        .AsNoTracking()
-                        .Where(pw => pw.ReferenceToBicycle.ToLower().Equals(id))
-                        .Select(pw => pw)
-                        .ToListAsync();
-
-                    plannedStocks.Add(id, plannedStock);
-                }
-
-                var capRequirements = await ExecuteCapacityRequirements(productionOrders, productionOrders, plannedStocks);
+                
+                    var capRequirements = await ExecuteCapacityRequirements(disposition);
                 
                 return Ok(capRequirements.Select(c => c.Value).OrderBy(c => c.Workstation));
             }
@@ -436,10 +436,10 @@ namespace IBSYS.PPS.Controllers
         }
 
         [NonAction]
-        public async Task<Dictionary<int, CapacityRequirementExtended>> ExecuteCapacityRequirements(List<ProductionOrder> salesOrders, List<ProductionOrder> forecasts, Dictionary<String, List<PlannedWarehouseStock>> plannedWarehouseStocks)
+        public async Task<Dictionary<int, CapacityRequirementExtended>> ExecuteCapacityRequirements(List<BicyclePart> dispositionData)
         {
             #region Capacity Data
-            Dictionary<String, List<CapacityRequirement>> capData = new Dictionary<String, List<CapacityRequirement>>();
+            var capData = new Dictionary<String, List<CapacityRequirement>>();
             capData.Add("P1", new List<CapacityRequirement>() { new CapacityRequirement(6, 30, 4) });
             capData.Add("P2", new List<CapacityRequirement>() { new CapacityRequirement(7, 20, 4) });
             capData.Add("P3", new List<CapacityRequirement>() { new CapacityRequirement(7, 30, 4) });
@@ -472,39 +472,45 @@ namespace IBSYS.PPS.Controllers
             capData.Add("E56", new List<CapacityRequirement>() { new CapacityRequirement(6, 20, 3) });
             #endregion
 
+            // Includes every workstation with the regarding capacity requirement (new)
             var capRequirements = new Dictionary<int, int>();
-            var setupTimes = new Dictionary<int, (int setupEvents, int setupTime)>();
-            foreach (KeyValuePair<String, List<PlannedWarehouseStock>> pair in plannedWarehouseStocks)
-            {
-                var dispositionData = ExecuteDisposition(pair.Key,
-                    forecasts.Where(f => f.Bicycle.Equals(pair.Key.ToUpper())).Select(f => f.Orders).First(),
-                    (int)salesOrders.Where(s => s.Bicycle.Equals(pair.Key.ToUpper())).Select(s => s.Orders[0]).First(), 
-                    pair.Value);
 
-                foreach (BicyclePart part in dispositionData.Result.Parts)
+            var setupTimes = new Dictionary<int, int>();
+            
+            foreach (var part in dispositionData)
+            {
+                var capacityData = capData[part.Name];
+
+                foreach (var requirement in capacityData)
                 {
-                    var capacityData = capData[part.Name];
-                    foreach (CapacityRequirement requirement in capacityData)
+                    // Amount of parts for production
+                    var quantity = Convert.ToInt32(part.Quantity);
+                    // Time required for the production of this amount of parts
+                    int time;
+                    // If the workstation exists in the list, give back the existing capacity requirement
+                    if (capRequirements.TryGetValue(requirement.workStation, out time))
                     {
-                        int time;
-                        int quantity = Convert.ToInt32(part.Quantity);
-                        if (capRequirements.TryGetValue(requirement.workStation, out time))
-                        {
-                            time += requirement.processTime * quantity;
-                        }
-                        else
-                        {
-                            capRequirements.Add(requirement.workStation, requirement.processTime * quantity);
-                        }
-                        int setupTime;
-                        if (setupTimes.TryGetValue(requirement.workStation, out (int setupEvent, int setupTime) setup))
-                        {
-                            setupTime = (setup.setupTime + requirement.setupTime) / 2;
-                        }
-                        else
-                        {
-                            setupTimes.Add(requirement.workStation, (quantity, requirement.setupTime));
-                        }
+                        time += requirement.processTime * quantity;
+                        capRequirements[requirement.workStation] = time;
+                    }
+                    // If not, create a new item in the workstation item in the list
+                    // with the regarding capacity requirement for the specific part
+                    else
+                    {
+                        capRequirements.Add(requirement.workStation, requirement.processTime * quantity);
+                    }
+
+                    int setupTime;
+                    // If the workstation exists with their Setup-Events and Setup-Times, give them back
+                    if (setupTimes.TryGetValue(requirement.workStation, out setupTime))
+                    {
+                        setupTime = (setupTime + requirement.setupTime) / 2;
+                        setupTimes[requirement.workStation] = setupTime;
+                    }
+                    // If not, add the workstation with the regarding values
+                    else
+                    {
+                        setupTimes.Add(requirement.workStation, requirement.setupTime);
                     }
                 }
             }
@@ -515,29 +521,38 @@ namespace IBSYS.PPS.Controllers
 
             foreach (var workstation in workstations)
             {
-                var setupEvents = await _db.SetupEvents.AsNoTracking()
-                    .Where(setupEvent => setupEvent.WorkplaceId.Equals(workstation.ToString()))
-                    .Select(setupEvent => setupEvent.NumberOfSetupEvents)
+                // Aquire Setup-Events from last period for this workplace
+                // Serves as prognosis for the next period
+                var setupEvents = await _db.SetupEvents
+                    .AsNoTracking()
+                    .Where(s => s.WorkplaceId.Equals(workstation.ToString()))
+                    .Select(s => s.NumberOfSetupEvents)
                     .FirstOrDefaultAsync();
 
-                capRequirements[workstation] += setupEvents * setupTimes[workstation].setupTime;
+                capRequirements[workstation] += setupEvents * setupTimes[workstation];
 
-                var waitinglistWorkstations = await _db.WaitinglistWorkstations.AsNoTracking()
-                    .Where(ws => Convert.ToInt32(ws.WorkplaceId).Equals(workstation) && ws.TimeNeed > 0)
-                    .Select(ws => ws.TimeNeed).FirstOrDefaultAsync();
+                // Aquire the time needed from orders out of the queue (not enough time)
+                var waitinglistWorkstations = await _db.WaitinglistWorkstations
+                    .AsNoTracking()
+                    .Where(ws => ws.WorkplaceId.Equals(workstation.ToString()) && ws.TimeNeed > 0)
+                    .Select(ws => ws.TimeNeed)
+                    .FirstOrDefaultAsync();
 
-                var waitinglistMissingParts = await _db.WaitinglistStock.AsNoTracking()
-                     .Include(w => w.WaitinglistForStock).ThenInclude(w => w.WaitinglistForWorkplaceStock)
-                     .Select(w => w.WaitinglistForStock
-                         .Where(wws => Convert.ToInt32(wws.WorkplaceId).Equals(workstation))
-                         .Select(ws => ws.WaitinglistForWorkplaceStock
-                         .Where(wss => wss.TimeNeed > 0).Select(wss => wss.TimeNeed).Sum())).FirstOrDefaultAsync();
+                // Aquire the time needed from orders out of the queue (not enough parts)
+                var waitinglistMissingParts = await _db.WaitinglistStock
+                    .AsNoTracking()
+                    .Include(wls => wls.WaitinglistForStock).ThenInclude(wls => wls.WaitinglistForWorkplaceStock)
+                    .Select(wls => wls.WaitinglistForStock
+                        .Where(wls => wls.WorkplaceId.Equals(workstation.ToString()))
+                        .Select(wlfs => wlfs.TimeNeed).Sum())
+                    .ToListAsync();
 
+                // Aquire the time needed from orders out of the queue (not enough time)
                 var workInProgress = await _db.OrdersInWork.AsNoTracking()
-                   .Where(wip => wip.Id.Equals(workstation) && wip.TimeNeed > 0)
+                   .Where(wip => wip.Id.Equals(workstation.ToString()) && wip.TimeNeed > 0)
                    .Select(oiw => oiw.TimeNeed).SumAsync();
 
-                foreach (var value in new List<int> { waitinglistWorkstations, workInProgress, workInProgress })
+                foreach (var value in new List<int> { waitinglistWorkstations, waitinglistMissingParts.Sum(), workInProgress })
                 {
                     capRequirements[workstation] += value;
                 }
@@ -548,7 +563,7 @@ namespace IBSYS.PPS.Controllers
                     TimeFromWaitinglist = waitinglistWorkstations,
                     TimeFromWiP = workInProgress,
                     SetupEvents = setupEvents,
-                    SetupTime = setupTimes[workstation].setupTime,
+                    SetupTime = setupTimes[workstation],
                     RequiredCapacity = capRequirements[workstation]
                 });
             }
