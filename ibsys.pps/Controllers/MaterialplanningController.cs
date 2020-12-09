@@ -561,7 +561,7 @@ namespace IBSYS.PPS.Controllers
 
             var orderQuotient = stockLasts / (maxDeliveryDuration * 5);
 
-            if (orderQuotient < 1.0)
+            if (orderQuotient is (> 0 and < 1.0))
             {
                 // Fast Order
                 var daysTillFastDeliveryAvailable = Math.Ceiling(deliveryDuration * 2.5);
@@ -579,6 +579,12 @@ namespace IBSYS.PPS.Controllers
                     orderType = 5;
                     orderAmount = discountQuantity;
                 }
+            }
+            if (orderQuotient is 0)
+            {
+                // JustInTime Order
+                orderType = 3;
+                orderAmount = discountQuantity;
             }
 
             var optimalOrderQuantity = CalculateAndlerFormula(

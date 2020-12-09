@@ -403,15 +403,11 @@ namespace IBSYS.PPS.Controllers
 
                 if (!plannedWarehouseStock.Any())
                 {
-                    // Calculate new SafetyStock if nothing comes from user input
-                    plannedStock = (int)Math.Round((Math.Ceiling(forecasts.Sum() / 4) - warehouseStock) / 10) * 10;
-                    if (plannedStock > warehouseStock || plannedStock < 0)
+                    plannedStock = (int)Math.Round(Math.Ceiling((forecasts[0] - (double)salesOrders + (double)warehouseStock + (double)ordersInWaitingQueue + (double)wip) / 10) * 10);
+
+                    if (plannedStock < 0)
                     {
-                        plannedStock = (int)Math.Round((decimal)warehouseStock / 10) * 10;
-                    }
-                    if (plannedStock == 0)
-                    {
-                        plannedStock = (int)Math.Round(Math.Ceiling(forecasts.Sum() / 4) / 10) * 10; 
+                        plannedStock = Convert.ToInt32(stockQuantity);
                     }
                 }
                 else
