@@ -175,6 +175,7 @@ namespace IBSYS.PPS.Controllers
             {
                 var disposition = await _db.DispositionEParts
                     .AsNoTracking()
+                    .Where(d => d.ReferenceToBicycle != null)
                     .Select(d => d)
                     .ToListAsync();
                 
