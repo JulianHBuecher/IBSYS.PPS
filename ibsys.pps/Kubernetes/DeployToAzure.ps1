@@ -34,7 +34,7 @@ function Install() {
     --set controller.nodeSelector."beta\.kubernetes\.io/os"=linux `
     --set controller.replicaCount=1 `
     --set defaultBackend.nodeSelector."beta\.kubernetes\.io/os"=linux `
-    --set controller.service.loadBalancerIP="20.52.25.31" `
+    --set controller.service.loadBalancerIP="20.73.197.145" `
     --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"="ibsys2pps-k8s"
     
     Start-Sleep -s 10
@@ -47,7 +47,7 @@ function Install() {
       --set nodeSelector."beta\.kubernetes\.io/os"=linux `
       jetstack/cert-manager
     
-    Start-Sleep -s 20
+    Start-Sleep -s 40
     Write-Output "`n`nInstallation of Cluster Issuer: "
     
     kubectl apply -f .\cluster-issuer.yml

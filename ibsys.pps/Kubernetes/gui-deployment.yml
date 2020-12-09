@@ -13,10 +13,10 @@ spec:
         app: pps-frontend
     spec:
       containers:
-      - name: gui
-        image: ibsystwocontainerregistry.azurecr.io/ibsys-gui:v1
-        ports:
-        - containerPort: 80
+        - name: gui
+          image: ibsys2registry2.azurecr.io/ibsys-gui:v1
+          ports:
+            - containerPort: 80
 ---
 apiVersion: v1
 kind: Service
@@ -25,8 +25,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: http
-    port: 80
-    targetPort: 80
+    - name: http
+      port: 80
+      targetPort: 80
   selector:
     app: pps-frontend
