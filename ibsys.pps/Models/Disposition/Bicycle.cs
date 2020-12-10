@@ -37,5 +37,7 @@ namespace IBSYS.PPS.Models.Disposition
     {
         [JsonProperty("Optimized Order")]
         public int Optimized { get; set; }
+        [JsonProperty("Processing Time")]
+        public int ProcessingTime { get; set; }
     }
 }

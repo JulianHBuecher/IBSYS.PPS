@@ -173,9 +173,9 @@ namespace IBSYS.PPS.Controllers
             var optimizedPartsP2 = initialStockEParts.Select(e => e).Where(p => extractedBicyclePTwo.Select(pp => pp.MaterialName).Contains(p.ItemNumber) || p.ItemNumber == "P 2");
             var optimizedPartsP3 = initialStockEParts.Select(e => e).Where(p => extractedBicyclePThree.Select(pp => pp.MaterialName).Contains(p.ItemNumber) || p.ItemNumber == "P 3");
 
-            optimizedPartsP1 = optimizedPartsP1.Select(p => p).OrderByDescending(p => p.ProcessingTime.Split("-")[1]).ToList();
-            optimizedPartsP2 = optimizedPartsP2.Select(p => p).OrderByDescending(p => p.ProcessingTime.Split("-")[1]).ToList();
-            optimizedPartsP3 = optimizedPartsP3.Select(p => p).OrderByDescending(p => p.ProcessingTime.Split("-")[1]).ToList();
+            optimizedPartsP1 = optimizedPartsP1.Select(p => p).OrderByDescending(p => p.ProcessingTime.Split("-")[0]).ToList();
+            optimizedPartsP2 = optimizedPartsP2.Select(p => p).OrderByDescending(p => p.ProcessingTime.Split("-")[0]).ToList();
+            optimizedPartsP3 = optimizedPartsP3.Select(p => p).OrderByDescending(p => p.ProcessingTime.Split("-")[0]).ToList();
 
             foreach (var material in optimizedPartsP1)
             {
@@ -183,7 +183,7 @@ namespace IBSYS.PPS.Controllers
                         .Where(p => Regex.Match(p.Name, @"\d+").Value.Equals(Regex.Match(material.ItemNumber, @"\d+").Value))
                         .FirstOrDefault();
 
-                UpdateOptimizedList(part, optimizedParts);
+                UpdateOptimizedList(part, optimizedParts, Convert.ToInt32(material.ProcessingTime.Split("-")[0]));
 
                 partsFromDisposition.Remove(part);
             }
@@ -194,7 +194,7 @@ namespace IBSYS.PPS.Controllers
                         .Where(p => Regex.Match(p.Name, @"\d+").Value.Equals(Regex.Match(material.ItemNumber, @"\d+").Value))
                         .FirstOrDefault();
 
-                UpdateOptimizedList(part, optimizedParts);
+                UpdateOptimizedList(part, optimizedParts, Convert.ToInt32(material.ProcessingTime.Split("-")[0]));
 
                 partsFromDisposition.Remove(part);
             }
@@ -205,7 +205,7 @@ namespace IBSYS.PPS.Controllers
                         .Where(p => Regex.Match(p.Name, @"\d+").Value.Equals(Regex.Match(material.ItemNumber, @"\d+").Value))
                         .FirstOrDefault();
 
-                UpdateOptimizedList(part, optimizedParts);
+                UpdateOptimizedList(part, optimizedParts, Convert.ToInt32(material.ProcessingTime.Split("-")[0]));
 
                 partsFromDisposition.Remove(part);
             }
@@ -283,7 +283,7 @@ namespace IBSYS.PPS.Controllers
         }
 
         [NonAction]
-        public void UpdateOptimizedList(BicyclePart part, List<OptimizedPart> list)
+        public void UpdateOptimizedList(BicyclePart part, List<OptimizedPart> list, int processingTime)
         {
             var partExists = list.Select(p => p).Where(p => p.Name.Equals(part.Name)).FirstOrDefault();
 
@@ -307,7 +307,8 @@ namespace IBSYS.PPS.Controllers
                     OrdersInQueueOwn = part.OrdersInQueueOwn,
                     Wip = part.Wip,
                     Quantity = part.Quantity,
-                    Optimized = list.Count()
+                    Optimized = list.Count(),
+                    ProcessingTime = Convert.ToInt32(part.Quantity) * processingTime
                 });
             }
         }
