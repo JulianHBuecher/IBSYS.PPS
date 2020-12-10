@@ -574,9 +574,9 @@ namespace IBSYS.PPS.Controllers
         [NonAction]
         public void CheckForConsistency(Workingtime w)
         {
-            if ((w.Shift.Equals("1") || w.Shift.Equals("2")) && Convert.ToInt32(w.Overtime) > 1200)
+            if ((w.Shift.Equals("1") || w.Shift.Equals("2")) && Convert.ToInt32(w.Overtime) > 240)
             {
-                throw new Exception("Overtime have to be lesser than 1200!");
+                throw new Exception("Overtime have to be lesser than 240 minutes a day!");
             }
             if (w.Shift.Equals("3") && Convert.ToInt32(w.Overtime) > 0)
             {

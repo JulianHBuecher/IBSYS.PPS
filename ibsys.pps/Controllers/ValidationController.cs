@@ -5,36 +5,38 @@ using MathNet.Numerics.LinearAlgebra;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace IBSYS.PPS.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class MaterialplanningController : ControllerBase
+    public class ValidationController : ControllerBase
     {
-        private readonly ILogger<MaterialplanningController> _logger;
+        private readonly ILogger<ValidationController> _logger;
         private readonly IbsysDatabaseContext _db;
 
-        public MaterialplanningController(ILogger<MaterialplanningController> logger, IbsysDatabaseContext db)
+        public ValidationController(ILogger<ValidationController> logger, IbsysDatabaseContext db)
         {
             _logger = logger;
             _db = db;
         }
 
-        [HttpGet]
-        public async Task<ActionResult> Materialplanning()
+
+        [HttpGet("required/capacity")]
+        public async Task<ActionResult> CapacityValidation()
         {
             var productionOrders = await _db.ProductionOrders
                 .AsNoTracking()
                 .Select(po => po)
+                .ToListAsync();
+
+            var selldirectItems = await _db.SellDirectItems
+                .AsNoTracking()
+                .Select(s => s)
                 .ToListAsync();
 
             var changedRequirements = await _db.DispositionEParts
@@ -43,17 +45,14 @@ namespace IBSYS.PPS.Controllers
                 .Select(d => new { d.Name, d.Quantity })
                 .ToListAsync();
 
-            var selldirectItems = await _db.SellDirectItems
-                .AsNoTracking()
-                .Select(s => s)
-                .ToListAsync();
-
             productionOrders = AddSelldirectItems(productionOrders, selldirectItems);
+
+            double[,] productionMatrix;
 
             var changedRequirementsTupel = changedRequirements.Select(d => (Bicycle: d.Name, Amount: d.Quantity)).ToList();
 
-            var productionMatrix = CheckForChangedProductionOrders(productionOrders, changedRequirementsTupel);
-
+            productionMatrix = CheckForChangedProductionOrders(productionOrders, changedRequirementsTupel);
+            
             // Extract bicycles per number for filtering the needed materials
             var bicycleParts = await _db.BillOfMaterials
                 .AsNoTracking()
@@ -66,7 +65,7 @@ namespace IBSYS.PPS.Controllers
             var completedPartList = await CreateCompleteMaterialListForBicycle(p1, p2, p3);
 
             var neededMaterialMatrix = await CreateNeededMaterialMatrix(p1, p2, p3);
-            
+
             // Matrix Multiplikation for Calculation of required parts
             var productionOrderMatrix = Matrix<Double>.Build.DenseOfArray(productionMatrix);
 
@@ -77,7 +76,7 @@ namespace IBSYS.PPS.Controllers
                 var orders = await PlaceOrder(calculatedNewParts, completedPartList, p1, p2, p3);
 
                 return Ok(orders
-                    .Where(o => (o.OrderModus != 0 && Convert.ToInt32(o.OrderQuantity) != 0))
+                    .Where(o => (o.OrderModus != 0 && Convert.ToInt32(o.OrderQuantity) != 0 && o.OrderQuotient == 0))
                     .Select(o => o).ToList());
             }
             catch (Exception ex)
@@ -86,163 +85,49 @@ namespace IBSYS.PPS.Controllers
             }
         }
 
-        [HttpPost("syncresult")]
-        public async Task<ActionResult> PostResultForPersistence()
+        [HttpGet("required/time")]
+        public async Task<ActionResult> RequiredTimeValidation()
         {
-            var orderPlacements = new List<OrderForK>();
-
-            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
-            {
-                var body = await reader.ReadToEndAsync();
-                if (body.Length != 0)
-                {
-                    JObject o = JObject.Parse(body);
-                    JArray a = (JArray)o["Materialplanning"];
-                    orderPlacements = a.ToObject<List<OrderForK>>();
-                }
-            }
-
             try
             {
-                if (orderPlacements != null)
+                var productionOrders = await _db.ProductionOrders
+                    .AsNoTracking()
+                    .Select(po => po)
+                    .ToListAsync();
+
+                var selldirectItems = await _db.SellDirectItems
+                    .AsNoTracking()
+                    .Select(s => s)
+                    .ToListAsync();
+
+                var changedRequirements = await _db.DispositionEParts
+                    .AsNoTracking()
+                    .Where(d => d.Name.Equals("P1") || d.Name.Equals("P2") || d.Name.Equals("P3"))
+                    .Select(d => new { d.Name, d.Quantity })
+                    .ToListAsync();
+
+                productionOrders = AddSelldirectItems(productionOrders, selldirectItems);
+
+                double[,] productionMatrix;
+
+                var changedRequirementsTupel = changedRequirements.Select(d => (Bicycle: d.Name, Amount: d.Quantity)).ToList();
+
+                productionMatrix = CheckForChangedProductionOrders(productionOrders, changedRequirementsTupel);
+
+                var requiredTime = productionMatrix[0, 0] * 6 + productionMatrix[1, 0] * 7 + productionMatrix[2, 0] * 7;
+
+                if (requiredTime > 7200)
                 {
-                    var placedOrders = await _db.OrdersForK
-                        .Select(o => o)
-                        .ToListAsync();
-
-                    var updatedOrder = new List<OrderForK>();
-                    
-                    if (!placedOrders.Any())
-                    {
-                        await _db.AddRangeAsync(orderPlacements);
-                    }
-                    else
-                    {
-                        orderPlacements.ForEach(o =>
-                        {
-                            var forUpdate = placedOrders.Where(po => po.PartName.Equals(o.PartName)).Select(po => po).FirstOrDefault();
-                            if (forUpdate != null)
-                            {
-                                forUpdate.OrderQuantity = o.OrderQuantity;
-                                forUpdate.OrderModus = o.OrderModus;
-                                updatedOrder.Add(forUpdate);
-                            }
-                            if (!placedOrders.Where(po => po.PartName.Equals(o.PartName)).Select(po => po).Any())
-                            {
-                                updatedOrder.Add(o);
-                            }
-                        });
-
-                        var partsForDeletion = placedOrders.Except(updatedOrder).ToList();
-
-                        if (partsForDeletion.Count() != 0)
-                        {
-                            _db.RemoveRange(partsForDeletion);
-                        }
-
-                        _db.UpdateRange(updatedOrder);
-                    }
+                    return BadRequest("Not enough time to produce all parts");
                 }
-
-                await _db.SaveChangesAsync();
-
-                return Ok("Data sucessfully inserted");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Something went wrong, {ex.Message}");
-            }
-        }
-
-        [HttpGet("placedorders")]
-        public async Task<ActionResult> GetPlacedOrders()
-        {
-            var placedOrders = await _db.OrdersForK
-                .AsNoTracking()
-                .Include(o => o.OptimalOrderQuantity)
-                .Select(o => o)
-                .ToListAsync();
-
-            if (placedOrders.Any())
-            {
-                return Ok(placedOrders);
-            }
-            else
-            {
-                return BadRequest("No data found. Please calculate and persist your results!");
-            }
-        }
-
-        [HttpGet("kpart/{partnumber}")]
-        public async Task<ActionResult> GetKPartByNumber(string partnumber)
-        {
-            var kPart = await _db.PurchasedItems
-                .AsNoTracking()
-                .Where(p => p.ItemNumber.Equals($"K {partnumber}"))
-                .Select(p => p)
-                .FirstOrDefaultAsync();
-
-            var material = await _db.Materials
-                .AsNoTracking()
-                .Where(m => m.MaterialName.Equals($"K {partnumber}"))
-                .Select(m => m)
-                .FirstOrDefaultAsync();
-
-            var productionOrders = await _db.ProductionOrders
-                .AsNoTracking()
-                .Select(po => po)
-                .ToListAsync();
-
-            var changedRequirements = await _db.DispositionEParts
-                .AsNoTracking()
-                .Where(d => d.Name.Equals("P1") || d.Name.Equals("P2") || d.Name.Equals("P3"))
-                .Select(d => new { d.Name, d.Quantity })
-                .ToListAsync();
-
-            var changedRequirementsTupel = changedRequirements.Select(d => (Bicycle: d.Name, Amount: d.Quantity)).ToList();
-
-            var productionMatrix = CheckForChangedProductionOrders(productionOrders, changedRequirementsTupel);
-
-            // Extract bicycles per number for filtering the needed materials
-            var bicycleParts = await _db.BillOfMaterials
-                .AsNoTracking()
-                .Include(b => b.RequiredMaterials)
-                .Select(b => b)
-                .ToListAsync();
-
-            var (p1, p2, p3) = await ExtractBicycles(bicycleParts);
-
-            var completedPartList = await CreateCompleteMaterialListForBicycle(p1, p2, p3);
-
-            var neededMaterialMatrix = await CreateNeededMaterialMatrix(p1, p2, p3);
-
-            // Matrix Multiplikation for Calculation of required parts
-            var productionOrderMatrix = Matrix<Double>.Build.DenseOfArray(productionMatrix);
-
-            var calculatedNewParts = neededMaterialMatrix.Multiply(productionOrderMatrix);
-
-            var orders = await PlaceOrder(calculatedNewParts, completedPartList, p1, p2, p3);
-
-            var order = orders.Where(o => o.PartName.Equals($"K {partnumber}")).Select(o => o).FirstOrDefault();
-
-            if (order != null)
-            {
-                return Ok(new ExtendedKPart 
+                else
                 {
-                    ItemNumber = order.PartName,
-                    Description = kPart.Description,
-                    DiscountQuantity = kPart.DiscountQuantity,
-                    OrderCosts = kPart.OrderCosts,
-                    AdditionalParts = order.AdditionalParts,
-                    Stock = order.Stock,
-                    Requirements = order.Requirements,
-                    OrderQuotient = order.OrderQuotient,
-                    OptimalOrderQuantity = order.OptimalOrderQuantity
-                });
+                    return Ok("Required Time is ok!");
+                }
             }
-            else
+            catch (Exception e)
             {
-                return NotFound("No purchasable item with this number found!");
+                return BadRequest($"Something went wrong, {e.Message}");
             }
         }
 
@@ -361,7 +246,7 @@ namespace IBSYS.PPS.Controllers
         }
 
         [NonAction]
-        public List<Material> InsertNotNeededMaterials(List<Material> listForInsert, List<Material> referenceListTwo, 
+        public List<Material> InsertNotNeededMaterials(List<Material> listForInsert, List<Material> referenceListTwo,
             List<Material> referenceListThree)
         {
             var initialCount = listForInsert.Count();
@@ -420,7 +305,7 @@ namespace IBSYS.PPS.Controllers
                 waitinglistWorkstations = waitinglistWorkstations
                     .GroupBy(wlw => new {
                         wlw.Item,
-                        wlw.Batch 
+                        wlw.Batch
                     })
                     .OrderBy(wlw => wlw.Key.Item)
                     .Select(m => new WaitinglistForWorkplace
@@ -473,7 +358,7 @@ namespace IBSYS.PPS.Controllers
             }
             return orderPlacements;
         }
-        
+
         [NonAction]
         public async Task<int> ExtractAdditionalKParts(string ePart, int amount, string kPart, BillOfMaterial bicycleOne, BillOfMaterial bicycleTwo, BillOfMaterial bicycleThree)
         {
@@ -529,7 +414,7 @@ namespace IBSYS.PPS.Controllers
 
             return additionalAmount *= amount;
         }
-        
+
         [NonAction]
         public async Task<OrderForK> SetOrderTypeAndQuantity(Material material, string stockQuantity, Vector<Double> accordingRequirements, int partsFromQueue)
         {
@@ -595,13 +480,6 @@ namespace IBSYS.PPS.Controllers
                 orderAmount = discountQuantity;
             }
 
-            var optimalOrderQuantity = CalculateAndlerFormula(
-                    (int)Math.Round((decimal)(accordingRequirements.Sum() / 4 * 53) / 10) * 10, 
-                    kPart.OrderCosts, 
-                    kPart.ItemValue,
-                    orderType,
-                    stockValue);
-
             return new OrderForK
             {
                 PartName = kPart.ItemNumber,
@@ -611,14 +489,13 @@ namespace IBSYS.PPS.Controllers
                 Stock = stock,
                 Requirements = accordingRequirements.AsArray(),
                 OrderQuotient = orderQuotient,
-                OptimalOrderQuantity = optimalOrderQuantity
             };
         }
-        
+
         [NonAction]
         public int DaysStockWillLast(int stockAmount, int futureInward, Vector<Double> requirements)
         {
-            
+
             var lastForDays = 0;
             foreach (var req in requirements)
             {
@@ -636,37 +513,7 @@ namespace IBSYS.PPS.Controllers
             }
             return lastForDays;
         }
-    
-        [NonAction]
-        public Andler CalculateAndlerFormula(int jahresverbrauch, double bestellfixeKosten, 
-            double variableKosten, int orderType, double lagerkosten, 
-            double lagerkostensatz = 30.0, int konstante = 200)
-        {
-            if (orderType == 4)
-            {
-                bestellfixeKosten *= 10;
-            }
-
-            if (lagerkosten > 250000.00)
-            {
-                var additionalLagerkosten = (5000 * 53) / lagerkosten;
-                lagerkostensatz += additionalLagerkosten;
-            }
-
-            var result = Math.Sqrt((konstante * jahresverbrauch * bestellfixeKosten) / (variableKosten * lagerkostensatz));
-            result = (double)Math.Round((decimal)result / 10) * 10;
-            return new Andler
-            {
-                Konstante = konstante,
-                Jahresverbrauch = jahresverbrauch,
-                BestellfixeKosten = bestellfixeKosten,
-                VariableBestellkosten = variableKosten,
-                Lagerkostensatz = lagerkostensatz,
-                Lagerwert = lagerkosten,
-                Result = result
-            };
-        }
-    
+        
         [NonAction]
         public double[,] CheckForChangedProductionOrders(List<ProductionOrder> productionOrders, List<(string Bicycle, string Amount)> changedRequirementsTupel)
         {
@@ -681,7 +528,8 @@ namespace IBSYS.PPS.Controllers
                     if (j is 0)
                     {
                         var req = changedRequirementsTupel.Where(c => c.Bicycle.Contains("P" + (i + 1).ToString())).Select(c => c).FirstOrDefault();
-                        if (Convert.ToDouble(req.Amount) != productionOrders[i].Orders[j])
+                        if (Convert.ToDouble(req.Amount) != productionOrders[i].Orders[j]
+                            && Convert.ToDouble(req.Amount) != 0)
                         {
                             productionMatrix[i, j] = Convert.ToInt32(req.Amount);
                         }
@@ -698,14 +546,14 @@ namespace IBSYS.PPS.Controllers
             }
             return productionMatrix;
         }
-    
+
         [NonAction]
         public async Task<(BillOfMaterial, BillOfMaterial, BillOfMaterial)> ExtractBicycles(List<BillOfMaterial> bicycleParts)
         {
             var p1 = new BillOfMaterial();
             var p2 = new BillOfMaterial();
             var p3 = new BillOfMaterial();
-         
+
             foreach (var bicycle in bicycleParts)
             {
                 foreach (var material in bicycle.RequiredMaterials)
@@ -725,7 +573,7 @@ namespace IBSYS.PPS.Controllers
 
             return (p1, p2, p3);
         }
-    
+
         [NonAction]
         public async Task<Matrix<double>> CreateNeededMaterialMatrix(BillOfMaterial p1, BillOfMaterial p2, BillOfMaterial p3)
         {
@@ -769,7 +617,7 @@ namespace IBSYS.PPS.Controllers
 
             return neededMaterialMatrix;
         }
-    
+
         [NonAction]
         public async Task<List<Material>> CreateCompleteMaterialListForBicycle(BillOfMaterial p1, BillOfMaterial p2, BillOfMaterial p3)
         {
@@ -801,7 +649,7 @@ namespace IBSYS.PPS.Controllers
 
             return completedParts;
         }
-        
+    
         [NonAction]
         public List<ProductionOrder> AddSelldirectItems(List<ProductionOrder> productionOrders, List<SellDirectItem> selldirectItems)
         {
