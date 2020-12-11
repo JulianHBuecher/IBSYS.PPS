@@ -12,40 +12,40 @@ spec:
         app: elasticsearch
     spec:
       containers:
-      - name: elasticsearch
-        image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.9.3
-        # resources:
-        #   limits:
-        #     cpu: 1000m
-        #     memory: 3Gi
-        #   requests:
-        #     cpu: 100m
-        #     memory: 3Gi
-        ports:
-        - containerPort: 9200
-          name: http
-        - containerPort: 9300
-          name: transport
-        env:
-          - name: cluster.name
-            value: ibsys-pps
-          - name: ES_JAVA_OPTS
-            value: "-Xms512m -Xmx512m"
-          - name: discovery.type
-            value: single-node
-        livenessProbe:
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.9.3
+          # resources:
+          #   limits:
+          #     cpu: 1000m
+          #     memory: 3Gi
+          #   requests:
+          #     cpu: 100m
+          #     memory: 3Gi
+          ports:
+            - containerPort: 9200
+              name: http
+            - containerPort: 9300
+              name: transport
+          env:
+            - name: cluster.name
+              value: IBSYS2GRU4
+            - name: ES_JAVA_OPTS
+              value: "-Xms512m -Xmx512m"
+            - name: discovery.type
+              value: single-node
+          livenessProbe:
             tcpSocket:
               port: transport
             initialDelaySeconds: 5
             timeoutSeconds: 10
-        readinessProbe:
+          readinessProbe:
             tcpSocket:
               port: transport
             initialDelaySeconds: 5
             timeoutSeconds: 10
-        volumeMounts:
-        - name: elasticsearch-data
-          mountPath: /usr/share/elasticsearch/data
+          volumeMounts:
+            - name: elasticsearch-data
+              mountPath: /usr/share/elasticsearch/data
       volumes:
         - name: elasticsearch-data
           emptyDir: {}
@@ -59,12 +59,12 @@ spec:
     app: elasticsearch
   type: ClusterIP
   ports:
-  - name: http
-    port: 9200
-    targetPort: 9200
-  - name: transport
-    port: 9300
-    targetPort: 9300
+    - name: http
+      port: 9200
+      targetPort: 9200
+    - name: transport
+      port: 9300
+      targetPort: 9300
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -81,38 +81,38 @@ spec:
         app: kibana
     spec:
       containers:
-      - name: kibana
-        image: docker.elastic.co/kibana/kibana-oss:7.9.3
-        resources:
-          limits:
-            cpu: 1000m
-          requests:
-            cpu: 100m
-        env:
-          - name: CLUSTER_NAME
-            value: ibsys-pps
-          - name: SERVER_PORT
-            value: "5601"
-          - name: ELASTICSEARCH_URL
-            value: "[http://elasticsearch:9200]"
-          - name: SERVER_BASEPATH
-            value: "/kibana"
-          # - name: SERVER_REWRITEBASEPATH
-          #   value: "false"
-          # - name: ELASTICSEARCH_SYSTEM_USER
-          #   value: "kibana"
-          # - name: ELASTICSEARCH_PASSWORD
-          #   value: "kibana"
-        ports:
-        - containerPort: 5601
-          name: http
-          protocol: TCP
-        readinessProbe:
-          httpGet:
-            path: /api/status
-            port: 5601
-          initialDelaySeconds: 20
-          timeoutSeconds: 5
+        - name: kibana
+          image: docker.elastic.co/kibana/kibana-oss:7.9.3
+          resources:
+            limits:
+              cpu: 1000m
+            requests:
+              cpu: 100m
+          env:
+            - name: CLUSTER_NAME
+              value: IBSYS2GRU4
+            - name: SERVER_PORT
+              value: "5601"
+            - name: ELASTICSEARCH_URL
+              value: "[http://elasticsearch:9200]"
+            - name: SERVER_BASEPATH
+              value: "/kibana"
+            # - name: SERVER_REWRITEBASEPATH
+            #   value: "false"
+            # - name: ELASTICSEARCH_SYSTEM_USER
+            #   value: "kibana"
+            # - name: ELASTICSEARCH_PASSWORD
+            #   value: "kibana"
+          ports:
+            - containerPort: 5601
+              name: http
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /api/status
+              port: 5601
+            initialDelaySeconds: 20
+            timeoutSeconds: 5
 ---
 apiVersion: v1
 kind: Service
@@ -123,5 +123,5 @@ spec:
   selector:
     app: kibana
   ports:
-  - port: 80
-    targetPort: http
+    - port: 80
+      targetPort: http
