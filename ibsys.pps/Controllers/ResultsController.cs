@@ -108,19 +108,5 @@ namespace IBSYS.PPS.Controllers
 
             return Ok(inputFile);
         }
-
-        [NonAction]
-        public List<BicyclePart> SumFilteredMaterials(List<BicyclePart> materials)
-        {
-            var partsOrderedAndSummed = materials.GroupBy(p => p.Name).OrderBy(p => p.Key)
-                .Select(p => new BicyclePart
-                {
-                    Name = p.Key,
-                    Quantity = p.Select(pp => Convert.ToInt32(pp.Quantity)).Sum().ToString()
-                })
-                .ToList();
-
-            return partsOrderedAndSummed;
-        }
     }
 }

@@ -17,9 +17,7 @@ namespace IBSYS.PPS.Controllers
     public class SynchronisationController : ControllerBase
     {
         private readonly ILogger<SynchronisationController> _logger;
-
         private readonly IbsysDatabaseContext _db;
-
         private readonly DataService _service;
 
         public SynchronisationController(ILogger<SynchronisationController> logger, IbsysDatabaseContext db, DataService service)

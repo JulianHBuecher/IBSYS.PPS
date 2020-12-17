@@ -46,6 +46,11 @@ namespace IBSYS.PPS
             });
 
             services.AddScoped<DataService>();
+            services.AddScoped<DispositionService>();
+            services.AddScoped<CapacityService>();
+            services.AddScoped<MaterialplanningService>();
+            services.AddScoped<OptimizationService>();
+            services.AddScoped<ValidationService>();
 
             // Adding the Swagger API to the project
             services.AddSwaggerGen(options =>
@@ -57,7 +62,7 @@ namespace IBSYS.PPS
                     Description = "Description of all public endpoints for further development",
                     Contact = new OpenApiContact
                     {
-                        Name = "Julian Bücher",
+                        Name = "Julian B&uuml;cher",
                         Email = "buju1023@hs-karlsruhe.de"
                     },
                 });

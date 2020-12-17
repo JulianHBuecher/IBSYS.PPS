@@ -73,7 +73,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Kubernetes\" />
+      <Folder Include="manifests\" />
     </ItemGroup>
 
 </Project>
