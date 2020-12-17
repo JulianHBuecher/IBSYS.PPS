@@ -1,24 +1,21 @@
 ﻿using IBSYS.PPS.Models;
-using IBSYS.PPS.Models.Capacity;
 using IBSYS.PPS.Models.Disposition;
 using IBSYS.PPS.Models.Input;
 using IBSYS.PPS.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace IBSYS.PPS.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
+    [Produces("application/json")]
     public class DispositionController : ControllerBase
     {
         private readonly ILogger<DispositionController> _logger;
@@ -37,21 +34,9 @@ namespace IBSYS.PPS.Controllers
 
         // POST - Calculate Disposition of a bicycle
         [HttpPost("{bicycle}")]
-        public async Task<ActionResult> CalculateDisposition([FromRoute] string bicycle) 
-            //[FromBody] List<PlannedWarehouseStock> plannedStocks)
+        public async Task<ActionResult> CalculateDisposition([FromRoute] string bicycle, 
+            [FromBody] List<PlannedWarehouseStock> plannedStocks)
         {
-            var plannedStocks = new List<PlannedWarehouseStock>();
-
-            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
-            {
-                var body = await reader.ReadToEndAsync();
-                if (body.Length != 0)
-                {
-                    JObject o = JObject.Parse(body);
-                    JArray a = (JArray)o["PlannedStocks"];
-                    plannedStocks = a.ToObject<List<PlannedWarehouseStock>>();
-                }
-            }
 
             var productionOrders = await _db.ProductionOrders
                 .AsNoTracking()
@@ -89,21 +74,9 @@ namespace IBSYS.PPS.Controllers
         }
 
         [HttpPost("syncresult/disposition/{bicycle}")]
-        public async Task<ActionResult> PostResultForPersistence(string bicycle)
+        public async Task<ActionResult> PostResultForPersistence([FromRoute] string bicycle,
+            [FromBody] List<BicyclePart> productionOrders)
         {
-            var productionOrders = new List<BicyclePart>();
-
-            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
-            {
-                var body = await reader.ReadToEndAsync();
-                if (body.Length != 0)
-                {
-                    JObject o = JObject.Parse(body);
-                    JArray a = (JArray)o["DispositionResult"];
-                    productionOrders = a.ToObject<List<BicyclePart>>();
-                }
-            }
-
             try
             {
                 if (productionOrders != null)
@@ -197,21 +170,8 @@ namespace IBSYS.PPS.Controllers
         }
 
         [HttpPost("syncresult/capacityplanning")]
-        public async Task<ActionResult> PostCapacityResultForPersistence()
+        public async Task<ActionResult> PostCapacityResultForPersistence([FromBody] List<Workingtime> workingTimes)
         {
-            var workingTimes = new List<Workingtime>();
-
-            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
-            {
-                var body = await reader.ReadToEndAsync();
-                if (body.Length != 0)
-                {
-                    JObject o = JObject.Parse(body);
-                    JArray a = (JArray)o["CapacityPlanningResult"];
-                    workingTimes = a.ToObject<List<Workingtime>>();
-                }
-            }
-
             try
             {
                 if (workingTimes != null)
@@ -257,7 +217,7 @@ namespace IBSYS.PPS.Controllers
         }
 
         [HttpGet("{bicycle}")]
-        public async Task<ActionResult> GetDispositionForBicycle(string bicycle)
+        public async Task<ActionResult> GetDispositionForBicycle([FromRoute] string bicycle)
         {
             var disposition = await _db.DispositionEParts
                 .AsNoTracking()

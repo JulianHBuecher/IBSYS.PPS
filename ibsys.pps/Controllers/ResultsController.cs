@@ -13,8 +13,9 @@ using Microsoft.Extensions.Logging;
 
 namespace IBSYS.PPS.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
+    [Produces("application/xml")]
     public class ResultsController : ControllerBase
     {
         private readonly ILogger<ResultsController> _logger;

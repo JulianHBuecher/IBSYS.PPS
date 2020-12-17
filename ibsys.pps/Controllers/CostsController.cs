@@ -8,8 +8,9 @@ using System.Threading.Tasks;
 
 namespace IBSYS.PPS.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
+    [Produces("application/json")]
     public class CostsController : ControllerBase
     {
         private readonly ILogger<CostsController> _logger;

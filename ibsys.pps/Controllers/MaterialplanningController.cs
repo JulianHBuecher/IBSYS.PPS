@@ -15,8 +15,9 @@ using System.Threading.Tasks;
 
 namespace IBSYS.PPS.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
+    [Produces("application/json")]
     public class MaterialplanningController : ControllerBase
     {
         private readonly ILogger<MaterialplanningController> _logger;
@@ -88,21 +89,8 @@ namespace IBSYS.PPS.Controllers
         }
 
         [HttpPost("syncresult")]
-        public async Task<ActionResult> PostResultForPersistence()
+        public async Task<ActionResult> PostResultForPersistence([FromBody] List<OrderForK> orderPlacements)
         {
-            var orderPlacements = new List<OrderForK>();
-
-            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
-            {
-                var body = await reader.ReadToEndAsync();
-                if (body.Length != 0)
-                {
-                    JObject o = JObject.Parse(body);
-                    JArray a = (JArray)o["Materialplanning"];
-                    orderPlacements = a.ToObject<List<OrderForK>>();
-                }
-            }
-
             try
             {
                 if (orderPlacements != null)
@@ -175,7 +163,7 @@ namespace IBSYS.PPS.Controllers
         }
 
         [HttpGet("kpart/{partnumber}")]
-        public async Task<ActionResult> GetKPartByNumber(string partnumber)
+        public async Task<ActionResult> GetKPartByNumber([FromRoute] string partnumber)
         {
             var kPart = await _db.PurchasedItems
                 .AsNoTracking()

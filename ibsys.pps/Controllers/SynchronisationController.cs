@@ -12,8 +12,8 @@ using System.Xml.Linq;
 
 namespace IBSYS.PPS.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class SynchronisationController : ControllerBase
     {
         private readonly ILogger<SynchronisationController> _logger;

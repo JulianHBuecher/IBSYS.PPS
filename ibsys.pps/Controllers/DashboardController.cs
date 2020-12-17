@@ -11,6 +11,7 @@ namespace IBSYS.PPS.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Produces("application/json")]
     public class DashboardController : ControllerBase
     {
         private readonly ILogger<DashboardController> _logger;

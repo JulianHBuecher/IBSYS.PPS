@@ -15,8 +15,9 @@ using System.Threading.Tasks;
 
 namespace IBSYS.PPS.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
+    [Produces("application/json")]
     public class OptimizationController : ControllerBase
     {
         private readonly ILogger<OptimizationController> _logger;
@@ -49,21 +50,8 @@ namespace IBSYS.PPS.Controllers
         }
 
         [HttpPost("syncresult")]
-        public async Task<ActionResult> PersistOptimizedParts()
+        public async Task<ActionResult> PersistOptimizedParts([FromBody] List<OptimizedPart> optimizedPartHierarchie)
         {
-            var optimizedPartHierarchie = new List<OptimizedPart>();
-
-            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
-            {
-                var body = await reader.ReadToEndAsync();
-                if (body.Length != 0)
-                {
-                    JObject o = JObject.Parse(body);
-                    JArray a = (JArray)o["OptimizedParts"];
-                    optimizedPartHierarchie = a.ToObject<List<OptimizedPart>>();
-                }
-            }
-
             try
             {
                 var optimizedParts = await _db.OptimizedParts

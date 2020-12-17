@@ -3,18 +3,16 @@ using IBSYS.PPS.Models.Input;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace IBSYS.PPS.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
+    [Produces("application/json")]
     public class UserInputController : ControllerBase
     {
         private readonly ILogger<UserInputController> _logger;
@@ -27,21 +25,8 @@ namespace IBSYS.PPS.Controllers
         }
 
         [HttpPost("productionorder")]
-        public async Task<ActionResult> PostProductionOrders()
+        public async Task<ActionResult> PostProductionOrders([FromBody] List<ProductionOrder> productionOrders)
         {
-            var productionOrders = new List<ProductionOrder>();
-
-            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
-            {
-                var body = await reader.ReadToEndAsync();
-                if (body.Length != 0)
-                {
-                    JObject o = JObject.Parse(body);
-                    JArray a = (JArray)o["ProductionOrders"];
-                    productionOrders = a.ToObject<List<ProductionOrder>>();
-                }
-            }
-
             try
             {
                 var existingOrders = await _db.ProductionOrders
@@ -75,21 +60,8 @@ namespace IBSYS.PPS.Controllers
         }
 
         [HttpPost("selldirect")]
-        public async Task<ActionResult> PostSellDirectOrders()
-        {
-            var sellDirectOrders = new List<SellDirectItem>();
-            
-            using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
-            {
-                var body = await reader.ReadToEndAsync();
-                if (body.Length != 0)
-                {
-                    JObject o = JObject.Parse(body);
-                    JArray a = (JArray)o["SelldirectOrders"];
-                    sellDirectOrders = a.ToObject<List<SellDirectItem>>();
-                }
-            }
-            
+        public async Task<ActionResult> PostSellDirectOrders([FromBody] List<SellDirectItem> sellDirectOrders)
+        {            
             try
             {
                 var existingOrders = await _db.SellDirectItems
