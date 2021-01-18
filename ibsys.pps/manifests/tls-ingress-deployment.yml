@@ -16,10 +16,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - ibsys2pps-k8s.ddns.net
+        - ibsystwopps-k8s.ddns.net
       secretName: tls-secret
   rules:
-    - host: ibsys2pps-k8s.ddns.net
+    - host: ibsystwopps-k8s.ddns.net
       http:
         paths:
           - backend:

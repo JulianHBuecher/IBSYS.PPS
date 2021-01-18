@@ -34,8 +34,8 @@ function Install() {
     --set controller.nodeSelector."beta\.kubernetes\.io/os"=linux `
     --set controller.replicaCount=1 `
     --set defaultBackend.nodeSelector."beta\.kubernetes\.io/os"=linux `
-    --set controller.service.loadBalancerIP="20.73.197.145" `
-    --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"="ibsys2pps-k8s"
+    --set controller.service.loadBalancerIP="20.52.204.244" `
+    --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"="ibsystwopps-k8s"
     
     Start-Sleep -s 10
     Write-Output "`n`nInstallation of Cert Manager: "
