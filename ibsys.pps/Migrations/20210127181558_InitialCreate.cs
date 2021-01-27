@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace IBSYS.PPS.Migrations
 {
-    public partial class Initial_Create : Migration
+    public partial class InitialCreate : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -32,8 +32,10 @@ namespace IBSYS.PPS.Migrations
                     OrdersInQueueOwn = table.Column<string>(type: "text", nullable: true),
                     Wip = table.Column<string>(type: "text", nullable: true),
                     Quantity = table.Column<string>(type: "text", nullable: true),
+                    ReferenceToBicycle = table.Column<string>(type: "text", nullable: true),
                     Discriminator = table.Column<string>(type: "text", nullable: false),
-                    Optimized = table.Column<int>(type: "integer", nullable: true)
+                    Optimized = table.Column<int>(type: "integer", nullable: true),
+                    ProcessingTime = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -129,7 +131,10 @@ namespace IBSYS.PPS.Migrations
                     PartName = table.Column<string>(type: "text", nullable: true),
                     OrderQuantity = table.Column<string>(type: "text", nullable: true),
                     OrderModus = table.Column<int>(type: "integer", nullable: false),
-                    AdditionalParts = table.Column<int>(type: "integer", nullable: false)
+                    AdditionalParts = table.Column<int>(type: "integer", nullable: false),
+                    Stock = table.Column<int>(type: "integer", nullable: false),
+                    Requirements = table.Column<double[]>(type: "double precision[]", nullable: true),
+                    OrderQuotient = table.Column<double>(type: "double precision", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -322,6 +327,32 @@ namespace IBSYS.PPS.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AndlerValues",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Konstante = table.Column<int>(type: "integer", nullable: false),
+                    Jahresverbrauch = table.Column<int>(type: "integer", nullable: false),
+                    BestellfixeKosten = table.Column<double>(type: "double precision", nullable: false),
+                    VariableBestellkosten = table.Column<double>(type: "double precision", nullable: false),
+                    Lagerkostensatz = table.Column<double>(type: "double precision", nullable: false),
+                    Lagerwert = table.Column<double>(type: "double precision", nullable: false),
+                    Result = table.Column<double>(type: "double precision", nullable: false),
+                    OrderForKForeignKey = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AndlerValues", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AndlerValues_OrdersForK_OrderForKForeignKey",
+                        column: x => x.OrderForKForeignKey,
+                        principalTable: "OrdersForK",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "WaitinglistForStockWorkplaces",
                 columns: table => new
                 {
@@ -393,6 +424,12 @@ namespace IBSYS.PPS.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_AndlerValues_OrderForKForeignKey",
+                table: "AndlerValues",
+                column: "OrderForKForeignKey",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Batch_OrderID",
                 table: "Batch",
                 column: "OrderID");
@@ -426,6 +463,9 @@ namespace IBSYS.PPS.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "AndlerValues");
+
+            migrationBuilder.DropTable(
                 name: "Batch");
 
             migrationBuilder.DropTable(
@@ -442,9 +482,6 @@ namespace IBSYS.PPS.Migrations
 
             migrationBuilder.DropTable(
                 name: "Materials");
-
-            migrationBuilder.DropTable(
-                name: "OrdersForK");
 
             migrationBuilder.DropTable(
                 name: "OrdersInWork");
@@ -472,6 +509,9 @@ namespace IBSYS.PPS.Migrations
 
             migrationBuilder.DropTable(
                 name: "Workingtimes");
+
+            migrationBuilder.DropTable(
+                name: "OrdersForK");
 
             migrationBuilder.DropTable(
                 name: "FutureInwardStockMovement");

@@ -50,6 +50,11 @@ namespace IBSYS.PPS.Controllers
                 .Select(s => s)
                 .ToListAsync();
 
+            var placedOrders = await _db.OrdersForK
+                .Include(o => o.OptimalOrderQuantity)
+                .Select(o => o)
+                .ToListAsync();
+
             productionOrders = _service.AddSelldirectItems(productionOrders, selldirectItems);
 
             var changedRequirementsTupel = changedRequirements.Select(d => (Bicycle: d.Name, Amount: d.Quantity)).ToList();
@@ -78,9 +83,16 @@ namespace IBSYS.PPS.Controllers
             {
                 var orders = await _service.PlaceOrder(calculatedNewParts, completedPartList, p1, p2, p3);
 
-                return Ok(orders
-                    .Where(o => (o.OrderModus != 0 && Convert.ToInt32(o.OrderQuantity) != 0))
-                    .Select(o => o).ToList());
+                if (placedOrders.Any())
+                {
+                    return Ok(placedOrders);
+                }
+                else
+                {
+                    return Ok(orders
+                        .Where(o => (o.OrderModus != 0 && Convert.ToInt32(o.OrderQuantity) != 0))
+                        .Select(o => o).ToList());
+                }
             }
             catch (Exception ex)
             {
@@ -96,40 +108,18 @@ namespace IBSYS.PPS.Controllers
                 if (orderPlacements != null)
                 {
                     var placedOrders = await _db.OrdersForK
+                        .Include(o => o.OptimalOrderQuantity)
                         .Select(o => o)
                         .ToListAsync();
 
-                    var updatedOrder = new List<OrderForK>();
-                    
                     if (!placedOrders.Any())
                     {
                         await _db.AddRangeAsync(orderPlacements);
                     }
                     else
                     {
-                        orderPlacements.ForEach(o =>
-                        {
-                            var forUpdate = placedOrders.Where(po => po.PartName.Equals(o.PartName)).Select(po => po).FirstOrDefault();
-                            if (forUpdate != null)
-                            {
-                                forUpdate.OrderQuantity = o.OrderQuantity;
-                                forUpdate.OrderModus = o.OrderModus;
-                                updatedOrder.Add(forUpdate);
-                            }
-                            if (!placedOrders.Where(po => po.PartName.Equals(o.PartName)).Select(po => po).Any())
-                            {
-                                updatedOrder.Add(o);
-                            }
-                        });
-
-                        var partsForDeletion = placedOrders.Except(updatedOrder).ToList();
-
-                        if (partsForDeletion.Count() != 0)
-                        {
-                            _db.RemoveRange(partsForDeletion);
-                        }
-
-                        _db.UpdateRange(updatedOrder);
+                        _db.RemoveRange(placedOrders);
+                        await _db.AddRangeAsync(orderPlacements);
                     }
                 }
 
@@ -139,7 +129,7 @@ namespace IBSYS.PPS.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest($"Something went wrong, {ex.Message}");
+                return BadRequest($"Something went wrong, {ex.Message}. Inner Exception, {ex.InnerException}");
             }
         }
 

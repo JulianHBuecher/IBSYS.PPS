@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: gui
-          image: ibsys2group4registry.azurecr.io/ibsys-gui:v1.1
+          image: ibsys2group4registry.azurecr.io/ibsys-gui:v2.1
           ports:
             - containerPort: 80
 ---

@@ -10,8 +10,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IBSYS.PPS.Migrations
 {
     [DbContext(typeof(IbsysDatabaseContext))]
-    [Migration("20201125160341_Initial_Create")]
-    partial class Initial_Create
+    [Migration("20210127181558_InitialCreate")]
+    partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -55,6 +55,9 @@ namespace IBSYS.PPS.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Quantity")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReferenceToBicycle")
                         .HasColumnType("text");
 
                     b.Property<string>("WarehouseStockPassed")
@@ -300,6 +303,45 @@ namespace IBSYS.PPS.Migrations
                     b.ToTable("Materials");
                 });
 
+            modelBuilder.Entity("IBSYS.PPS.Models.Materialplanning.Andler", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .UseIdentityByDefaultColumn();
+
+                    b.Property<double>("BestellfixeKosten")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("Jahresverbrauch")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Konstante")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("Lagerkostensatz")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Lagerwert")
+                        .HasColumnType("double precision");
+
+                    b.Property<int?>("OrderForKForeignKey")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("Result")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("VariableBestellkosten")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderForKForeignKey")
+                        .IsUnique();
+
+                    b.ToTable("AndlerValues");
+                });
+
             modelBuilder.Entity("IBSYS.PPS.Models.Materialplanning.OrderForK", b =>
                 {
                     b.Property<int>("Id")
@@ -316,8 +358,17 @@ namespace IBSYS.PPS.Migrations
                     b.Property<string>("OrderQuantity")
                         .HasColumnType("text");
 
+                    b.Property<double>("OrderQuotient")
+                        .HasColumnType("double precision");
+
                     b.Property<string>("PartName")
                         .HasColumnType("text");
+
+                    b.Property<double[]>("Requirements")
+                        .HasColumnType("double precision[]");
+
+                    b.Property<int>("Stock")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -575,6 +626,9 @@ namespace IBSYS.PPS.Migrations
                     b.Property<int>("Optimized")
                         .HasColumnType("integer");
 
+                    b.Property<int>("ProcessingTime")
+                        .HasColumnType("integer");
+
                     b.HasDiscriminator().HasValue("OptimizedPart");
                 });
 
@@ -627,6 +681,15 @@ namespace IBSYS.PPS.Migrations
                     b.Navigation("ParentMaterial");
                 });
 
+            modelBuilder.Entity("IBSYS.PPS.Models.Materialplanning.Andler", b =>
+                {
+                    b.HasOne("IBSYS.PPS.Models.Materialplanning.OrderForK", "OrderForKFK")
+                        .WithOne("OptimalOrderQuantity")
+                        .HasForeignKey("IBSYS.PPS.Models.Materialplanning.Andler", "OrderForKForeignKey");
+
+                    b.Navigation("OrderForKFK");
+                });
+
             modelBuilder.Entity("IBSYS.PPS.Models.WaitinglistForStock", b =>
                 {
                     b.HasOne("IBSYS.PPS.Models.MissingPartInStock", "MissingPartInStock")
@@ -667,6 +730,11 @@ namespace IBSYS.PPS.Migrations
             modelBuilder.Entity("IBSYS.PPS.Models.Material", b =>
                 {
                     b.Navigation("MaterialNeeded");
+                });
+
+            modelBuilder.Entity("IBSYS.PPS.Models.Materialplanning.OrderForK", b =>
+                {
+                    b.Navigation("OptimalOrderQuantity");
                 });
 
             modelBuilder.Entity("IBSYS.PPS.Models.MissingPartInStock", b =>
