@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace IBSYS.PPS.Controllers
@@ -85,7 +86,10 @@ namespace IBSYS.PPS.Controllers
 
                 if (placedOrders.Any())
                 {
-                    return Ok(placedOrders);
+                    return Ok(placedOrders
+                        .Select(o => o)
+                        .OrderBy(o => Regex.Match(o.PartName, @"\d+").Value)
+                        .ToList());
                 }
                 else
                 {
