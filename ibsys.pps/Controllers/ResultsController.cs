@@ -64,19 +64,16 @@ namespace IBSYS.PPS.Controllers
                 .Select(w => w)
                 .ToListAsync();
 
-            var noSellDirectItems = selldirect.Select(s => s).Where(s => s.Quantity.Equals("0")).ToList();
 
-            if (noSellDirectItems.Count() == 3)
+            var inputFile = new Input
             {
-                var inputFile = new Input
+                Qualitycontrol = new Qualitycontrol
                 {
-                    Qualitycontrol = new Qualitycontrol
-                    {
-                        Type = "no",
-                        LoseQuantity = "0",
-                        Delay = "0"
-                    },
-                    PrognosedItems = new List<SellWishItem>
+                    Type = "no",
+                    LoseQuantity = "0",
+                    Delay = "0"
+                },
+                PrognosedItems = new List<SellWishItem>
                 {
                     new SellWishItem
                     {
@@ -94,65 +91,25 @@ namespace IBSYS.PPS.Controllers
                         Quantity = forecast.P3
                     }
                 }.ToArray(),
-                    Orders = orders.Select(o => new Order
-                    {
-                        Article = Regex.Match(o.PartName, @"\d+").Value,
-                        Quantity = o.OrderQuantity,
-                        Modus = o.OrderModus.ToString()
-                    }).ToArray(),
-                    Productions = productionList.ToArray(),
-                    Workingtimes = workingtimeList.ToArray()
-                };
-
-                return Ok(inputFile);
-            }
-            else
-            {
-                var inputFile = new Input
+                DirectSellItems = selldirect.Where(s => !s.Quantity.Equals("0"))
+                .Select(s => new SellDirectItem
                 {
-                    Qualitycontrol = new Qualitycontrol
-                    {
-                        Type = "no",
-                        LoseQuantity = "0",
-                        Delay = "0"
-                    },
-                    PrognosedItems = new List<SellWishItem>
+                    Article = s.Article,
+                    Quantity = s.Quantity,
+                    Price = s.Price,
+                    Penalty = s.Penalty
+                }).ToArray(),
+                Orders = orders.Select(o => new Order
                 {
-                    new SellWishItem
-                    {
-                        Article = "1",
-                        Quantity = forecast.P1
-                    },
-                    new SellWishItem
-                    {
-                        Article = "2",
-                        Quantity = forecast.P2
-                    },
-                    new SellWishItem
-                    {
-                        Article = "3",
-                        Quantity = forecast.P3
-                    }
-                }.ToArray(),
-                    DirectSellItems = selldirect.Select(s => new SellDirectItem
-                    {
-                        Article = s.Article,
-                        Quantity = s.Quantity,
-                        Price = s.Price,
-                        Penalty = s.Penalty
-                    }).ToArray(),
-                    Orders = orders.Select(o => new Order
-                    {
-                        Article = Regex.Match(o.PartName, @"\d+").Value,
-                        Quantity = o.OrderQuantity,
-                        Modus = o.OrderModus.ToString()
-                    }).ToArray(),
-                    Productions = productionList.ToArray(),
-                    Workingtimes = workingtimeList.ToArray()
-                };
+                    Article = Regex.Match(o.PartName, @"\d+").Value,
+                    Quantity = o.OrderQuantity,
+                    Modus = o.OrderModus.ToString()
+                }).ToArray(),
+                Productions = productionList.ToArray(),
+                Workingtimes = workingtimeList.ToArray()
+            };
 
-                return Ok(inputFile);
-            }
+            return Ok(inputFile);
         }
     }
 }
